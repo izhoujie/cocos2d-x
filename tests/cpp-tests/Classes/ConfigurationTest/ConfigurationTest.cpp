@@ -1,96 +1,46 @@
+/****************************************************************************
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
+ 
+ http://www.cocos2d-x.org
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+ ****************************************************************************/
+
 
 #include "ConfigurationTest.h"
 #include "../testResource.h"
 #include "cocos2d.h"
 
-static std::function<Layer*()> createFunctions[] = {
-    CL(ConfigurationLoadConfig),
-	CL(ConfigurationQuery),
-	CL(ConfigurationInvalid),
-	CL(ConfigurationDefault),
-	CL(ConfigurationSet)
-};
+USING_NS_CC;
 
-static int sceneIdx=-1;
-#define MAX_LAYER (sizeof(createFunctions) / sizeof(createFunctions[0]))
-
-static Layer* nextAction()
+ConfigurationTests::ConfigurationTests()
 {
-    sceneIdx++;
-    sceneIdx = sceneIdx % MAX_LAYER;
-    
-    auto layer = (createFunctions[sceneIdx])();
-    return layer;
+    ADD_TEST_CASE(ConfigurationLoadConfig);
+    ADD_TEST_CASE(ConfigurationQuery);
+    ADD_TEST_CASE(ConfigurationInvalid);
+    ADD_TEST_CASE(ConfigurationDefault);
+    ADD_TEST_CASE(ConfigurationSet);
 }
-
-static Layer* backAction()
-{
-    sceneIdx--;
-    int total = MAX_LAYER;
-    if( sceneIdx < 0 )
-        sceneIdx += total;
-    
-    auto layer = (createFunctions[sceneIdx])();
-    return layer;
-}
-
-static Layer* restartAction()
-{
-    auto layer = (createFunctions[sceneIdx])();    
-    return layer;
-}
-
-void ConfigurationTestScene::runThisTest()
-{
-    sceneIdx = -1;
-    addChild(nextAction());
-
-    Director::getInstance()->replaceScene(this);
-}
-
 
 std::string ConfigurationBase::title() const
 {
     return "Configuration Test";
-}
-
-std::string ConfigurationBase::subtitle() const
-{
-    return "";
-}
-
-void ConfigurationBase::onEnter()
-{
-    BaseTest::onEnter();
-}
-
-void ConfigurationBase::onExit()
-{
-    BaseTest::onExit();
-}
-
-void ConfigurationBase::restartCallback(Ref* sender)
-{
-    auto s = new (std::nothrow) ConfigurationTestScene();
-    s->addChild( restartAction() );
-    Director::getInstance()->replaceScene(s);
-    s->release();
-}
-
-void ConfigurationBase::nextCallback(Ref* sender)
-{
-    auto s = new (std::nothrow) ConfigurationTestScene();
-    s->addChild( nextAction() );
-    Director::getInstance()->replaceScene(s);
-    s->release();
-}
-
-void ConfigurationBase::backCallback(Ref* sender)
-{
-    auto s = new (std::nothrow) ConfigurationTestScene();
-    s->addChild( backAction() );
-    Director::getInstance()->replaceScene(s);
-    s->release();
 }
 
 //------------------------------------------------------------------

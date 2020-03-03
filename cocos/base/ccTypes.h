@@ -2,7 +2,8 @@
 Copyright (c) 2008-2010 Ricardo Quesada
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2011      Zynga Inc.
-Copyright (c) 2013-2015 Chukong Technologies Inc.
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -45,7 +46,7 @@ NS_CC_BEGIN
 struct Color4B;
 struct Color4F;
 
-/** 
+/**
  * RGB color composed of bytes 3 bytes.
  * @since v3.0
  */
@@ -63,7 +64,7 @@ struct CC_DLL Color3B
     bool operator!=(const Color4B& right) const;
     bool operator!=(const Color4F& right) const;
 
-    bool equals(const Color3B& other)
+    bool equals(const Color3B& other) const
     {
         return (*this == other);
     }
@@ -71,7 +72,7 @@ struct CC_DLL Color3B
     GLubyte r;
     GLubyte g;
     GLubyte b;
-    
+
     static const Color3B WHITE;
     static const Color3B YELLOW;
     static const Color3B BLUE;
@@ -83,7 +84,7 @@ struct CC_DLL Color3B
     static const Color3B GRAY;
 };
 
-/** 
+/**
  * RGBA color composed of 4 bytes.
  * @since v3.0
  */
@@ -91,8 +92,16 @@ struct CC_DLL Color4B
 {
     Color4B();
     Color4B(GLubyte _r, GLubyte _g, GLubyte _b, GLubyte _a);
-    explicit Color4B(const Color3B& color);
+    explicit Color4B(const Color3B& color, GLubyte _a = 255);
     explicit Color4B(const Color4F& color);
+    
+    inline void set(GLubyte _r, GLubyte _g, GLubyte _b, GLubyte _a)
+    {
+        r = _r;
+        g = _g;
+        b = _b;
+        a = _a;
+    }
 
     bool operator==(const Color4B& right) const;
     bool operator==(const Color3B& right) const;
@@ -118,7 +127,7 @@ struct CC_DLL Color4B
 };
 
 
-/** 
+/**
  * RGBA color composed of 4 floats.
  * @since v3.0
  */
@@ -126,7 +135,7 @@ struct CC_DLL Color4F
 {
     Color4F();
     Color4F(float _r, float _g, float _b, float _a);
-    explicit Color4F(const Color3B& color);
+    explicit Color4F(const Color3B& color, float _a = 1.0f);
     explicit Color4F(const Color4B& color);
 
     bool operator==(const Color4F& right) const;
@@ -136,11 +145,11 @@ struct CC_DLL Color4F
     bool operator!=(const Color3B& right) const;
     bool operator!=(const Color4B& right) const;
 
-    bool equals(const Color4F &other)
+    bool equals(const Color4F &other) const
     {
         return (*this == other);
     }
-    
+
     GLfloat r;
     GLfloat g;
     GLfloat b;
@@ -157,15 +166,32 @@ struct CC_DLL Color4F
     static const Color4F GRAY;
 };
 
+Color4F& operator+=(Color4F& lhs, const Color4F& rhs);
+Color4F operator+(Color4F lhs, const Color4F& rhs);
+
+Color4F& operator-=(Color4F& lhs, const Color4F& rhs);
+Color4F operator-(Color4F lhs, const Color4F& rhs);
+
+Color4F& operator*=(Color4F& lhs, const Color4F& rhs);
+Color4F operator*(Color4F lhs, const Color4F& rhs);
+Color4F& operator*=(Color4F& lhs, float rhs);
+Color4F operator*(Color4F lhs, float rhs);
+
+Color4F& operator/=(Color4F& lhs, const Color4F& rhs);
+Color4F operator/(Color4F lhs, const Color4F& rhs);
+Color4F& operator/=(Color4F& lhs, float rhs);
+Color4F operator/(Color4F lhs, float rhs);
+
+
 /** A vertex composed of 2 floats: x, y
  @since v3.0
  */
 // struct Vertex2F
 // {
 //     Vertex2F(float _x, float _y) :x(_x), y(_y) {}
-    
+
 //     Vertex2F(): x(0.f), y(0.f) {}
-    
+
 //     GLfloat x;
 //     GLfloat y;
 // };
@@ -181,23 +207,23 @@ struct CC_DLL Color4F
 //         , y(_y)
 //         , z(_z)
 //     {}
-    
+
 //     Vertex3F(): x(0.f), y(0.f), z(0.f) {}
-    
+
 //     GLfloat x;
 //     GLfloat y;
 //     GLfloat z;
 // };
-        
+
 /** @struct Tex2F
  * A TEXCOORD composed of 2 floats: u, y
  * @since v3.0
  */
 struct CC_DLL Tex2F {
     Tex2F(float _u, float _v): u(_u), v(_v) {}
-    
+
     Tex2F(): u(0.f), v(0.f) {}
-    
+
     GLfloat u;
     GLfloat v;
 };
@@ -222,7 +248,7 @@ struct CC_DLL Quad2
     Vec2        bl;
     Vec2        br;
 };
-   
+
 /** @struct Quad3
  * A 3D Quad. 4 * 3 floats.
  */
@@ -303,11 +329,11 @@ struct CC_DLL V3F_T2F
  */
 struct CC_DLL V2F_C4B_T2F_Triangle
 {
-	V2F_C4B_T2F a;
-	V2F_C4B_T2F b;
-	V2F_C4B_T2F c;
+    V2F_C4B_T2F a;
+    V2F_C4B_T2F b;
+    V2F_C4B_T2F c;
 };
- 
+
 /** @struct V2F_C4B_T2F_Quad
  * A Quad of V2F_C4B_T2F.
  */
@@ -354,7 +380,7 @@ struct CC_DLL V2F_C4F_T2F_Quad
 };
 
 /** @struct V3F_T2F_Quad
- * 
+ *
  */
 struct CC_DLL V3F_T2F_Quad
 {
@@ -403,7 +429,7 @@ struct CC_DLL BlendFunc
     }
 };
 
-/** @struct TextVAlignment
+/** @enum TextVAlignment
  * Vertical text alignment type.
  *
  * @note If any of these enums are edited and/or reordered, update Texture2D.m.
@@ -415,7 +441,7 @@ enum class CC_DLL TextVAlignment
     BOTTOM
 };
 
-/** @struct TextHAlignment
+/** @enum TextHAlignment
  * Horizontal text alignment type.
  *
  * @note If any of these enums are edited and/or reordered, update Texture2D.m.
@@ -425,6 +451,19 @@ enum class CC_DLL TextHAlignment
     LEFT,
     CENTER,
     RIGHT
+};
+
+/**
+* @brief Possible GlyphCollection used by Label.
+*
+* Specify a collections of characters to be load when Label created.
+* Consider using DYNAMIC.
+*/
+enum class GlyphCollection {
+    DYNAMIC,
+    NEHE,
+    ASCII,
+    CUSTOM
 };
 
 // Types for animation in particle systems
@@ -451,7 +490,7 @@ struct CC_DLL AnimationFrameData
 {
     T2F_Quad texCoords;
     float delay;
-    Size size; 
+    Size size;
 };
 
 /**
@@ -464,7 +503,7 @@ struct CC_DLL AnimationFrameData
 struct CC_DLL FontShadow
 {
 public:
-    
+
     // shadow is not enabled by default
     FontShadow()
         : _shadowEnabled(false)
@@ -475,11 +514,11 @@ public:
     /// true if shadow enabled
     bool   _shadowEnabled;
     /// shadow x and y offset
-	Size   _shadowOffset;
-    /// shadow blurrines
-	float  _shadowBlur;
+    Size   _shadowOffset;
+    /// shadow blurriness
+    float  _shadowBlur;
     /// shadow opacity
-	float  _shadowOpacity;
+    float  _shadowOpacity;
 };
 
 /** @struct FontStroke
@@ -488,24 +527,24 @@ public:
 struct CC_DLL FontStroke
 {
 public:
-    
+
     // stroke is disabled by default
     FontStroke()
-	    : _strokeEnabled(false)
+        : _strokeEnabled(false)
         , _strokeColor(Color3B::BLACK)
         , _strokeAlpha(255)
         , _strokeSize(0)
     {}
-    
+
     /// true if stroke enabled
     bool      _strokeEnabled;
     /// stroke color
-	Color3B   _strokeColor;
+    Color3B   _strokeColor;
     /// stroke alpha
     GLubyte   _strokeAlpha;
     /// stroke size
     float     _strokeSize;
-    
+
 };
 
 /** @struct FontDefinition
@@ -522,11 +561,14 @@ public:
         : _fontSize(0)
         , _alignment(TextHAlignment::CENTER)
         , _vertAlignment(TextVAlignment::TOP)
-    	, _dimensions(Size::ZERO)
+        , _lineSpacing(0.0f)
+        , _dimensions(Size::ZERO)
         , _fontFillColor(Color3B::WHITE)
         , _fontAlpha(255)
+        , _enableWrap(true)
+        , _overflow(0)
     {}
-    
+
     /// font name
     std::string           _fontName;
     /// font size
@@ -534,8 +576,10 @@ public:
     /// horizontal alignment
     TextHAlignment        _alignment;
     /// vertical alignment
-    TextVAlignment _vertAlignment;
-    /// renering box
+    TextVAlignment        _vertAlignment;
+    /// line spacing
+    float                 _lineSpacing;
+    /// rendering box
     Size                  _dimensions;
     /// font color
     Color3B               _fontFillColor;
@@ -545,7 +589,30 @@ public:
     FontShadow            _shadow;
     /// font stroke
     FontStroke            _stroke;
-    
+    /// enable text wrap
+    bool                  _enableWrap;
+    /** There are 4 overflows: none, clamp, shrink and resize_height.
+     *  The corresponding integer values are 0, 1, 2, 3 respectively
+     * For more information, please refer to Label::Overflow enum class.
+     */
+    int                  _overflow;
+};
+
+/**
+ * @brief Effects used by `Label`
+ *
+ */
+enum class LabelEffect {
+    // FIXME: Covert them to bitwise. More than one effect should be supported
+    NORMAL,
+    OUTLINE,
+    SHADOW,
+    GLOW,
+    ITALICS,
+    BOLD,
+    UNDERLINE,
+    STRIKETHROUGH,
+    ALL
 };
 
 /** @struct Acceleration
@@ -558,9 +625,9 @@ public:
     double x;
     double y;
     double z;
-    
+
     double timestamp;
-    
+
     Acceleration(): x(0), y(0), z(0), timestamp(0) {}
 };
 

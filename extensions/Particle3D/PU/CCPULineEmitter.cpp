@@ -1,6 +1,7 @@
 /****************************************************************************
  Copyright (C) 2013 Henry van Merode. All rights reserved.
- Copyright (c) 2015 Chukong Technologies Inc.
+ Copyright (c) 2015-2016 Chukong Technologies Inc.
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  
  http://www.cocos2d-x.org
  
@@ -35,10 +36,9 @@ const float PULineEmitter::DEFAULT_MAX_INCREMENT = 0.0f;
 const float PULineEmitter::DEFAULT_MAX_DEVIATION = 0.0f;
 
 //-----------------------------------------------------------------------
-PULineEmitter::PULineEmitter(void) : 
+PULineEmitter::PULineEmitter() :
     PUEmitter(),
     _end(DEFAULT_END),
-    _perpendicular(Vec3::ZERO),
     _maxDeviation(DEFAULT_MAX_DEVIATION),
     _minIncrement(DEFAULT_MIN_INCREMENT),
     _maxIncrement(DEFAULT_MAX_INCREMENT),
@@ -46,7 +46,6 @@ PULineEmitter::PULineEmitter(void) :
     _length(0.0f),
     _incrementsLeft(true),
     _first(true),
-    _scaledEnd(Vec3::ZERO),
     _scaledMaxDeviation(0.0f),
     _scaledMinIncrement(0.0f),
     _scaledMaxIncrement(0.0f),
@@ -54,7 +53,7 @@ PULineEmitter::PULineEmitter(void) :
 {
 }
 //-----------------------------------------------------------------------
-void PULineEmitter::notifyStart (void)
+void PULineEmitter::notifyStart ()
 {
     // Reset the incremental attributes to allow a restart.
     PUEmitter::notifyStart();
@@ -68,7 +67,7 @@ void PULineEmitter::notifyRescaled(const Vec3& scale)
     // Scale the internal attributes and use them, otherwise this results in too many calculations per particle
     PUEmitter::notifyRescaled(scale);
     float scaleLength = scale.length();
-    _scaledEnd = Vec3(_end.x * scale.x, _end.y * scale.y, _end.z * scale.z);
+    _scaledEnd.set(_end.x * scale.x, _end.y * scale.y, _end.z * scale.z);
     _scaledMaxDeviation = _maxDeviation * scaleLength;
     _scaledMinIncrement = _minIncrement * scaleLength;
     _scaledMaxIncrement = (_maxIncrement - _minIncrement) * scaleLength;
@@ -100,7 +99,7 @@ unsigned short PULineEmitter::calculateRequestedParticles(float timeElapsed)
     return requested;
 }
 //-----------------------------------------------------------------------
-const Vec3& PULineEmitter::getEnd(void) const
+const Vec3& PULineEmitter::getEnd() const
 {
     return _end;
 }
@@ -108,11 +107,11 @@ const Vec3& PULineEmitter::getEnd(void) const
 void PULineEmitter::setEnd(const Vec3& end)
 {
     _end = end;
-    _scaledEnd = Vec3(_end.x * _emitterScale.x, _end.y * _emitterScale.y, _end.z * _emitterScale.z);
+    _scaledEnd.set(_end.x * _emitterScale.x, _end.y * _emitterScale.y, _end.z * _emitterScale.z);
     _length = _end.length();
 }
 //-----------------------------------------------------------------------
-float PULineEmitter::getMaxIncrement(void) const
+float PULineEmitter::getMaxIncrement() const
 {
     return _maxIncrement;
 }
@@ -123,7 +122,7 @@ void PULineEmitter::setMaxIncrement(float maxIncrement)
     _scaledMaxIncrement = _maxIncrement * _emitterScale.length();
 }
 //-----------------------------------------------------------------------
-float PULineEmitter::getMinIncrement(void) const
+float PULineEmitter::getMinIncrement() const
 {
     return _minIncrement;
 }
@@ -134,7 +133,7 @@ void PULineEmitter::setMinIncrement(float minIncrement)
     _scaledMinIncrement = _minIncrement * _emitterScale.length();
 }
 //-----------------------------------------------------------------------
-float PULineEmitter::getMaxDeviation(void) const
+float PULineEmitter::getMaxDeviation() const
 {
     return _maxDeviation;
 }

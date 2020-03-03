@@ -2,7 +2,8 @@
 Copyright (c) 2011      Ricardo Quesada
 Copyright (c) 2010-2012 cocos2d-x.org
 Copyright (c) 2011      Zynga Inc.
-Copyright (C) 2013-2014 Chukong Technologies Inc.
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -28,6 +29,7 @@ THE SOFTWARE.
 #include "renderer/ccGLStateCache.h"
 
 #include "renderer/CCGLProgram.h"
+#include "renderer/CCRenderState.h"
 #include "base/CCDirector.h"
 #include "base/ccConfig.h"
 #include "base/CCConfiguration.h"
@@ -59,7 +61,7 @@ namespace
 
 namespace GL {
 
-void invalidateStateCache( void )
+void invalidateStateCache()
 {
     Director::getInstance()->resetMatrixStack();
     s_currentProjectionMatrix = -1;
@@ -109,12 +111,17 @@ static void SetBlending(GLenum sfactor, GLenum dfactor)
 	if (sfactor == GL_ONE && dfactor == GL_ZERO)
     {
 		glDisable(GL_BLEND);
+        RenderState::StateBlock::_defaultState->setBlend(false);
 	}
     else
     {
 		glEnable(GL_BLEND);
 		glBlendFunc(sfactor, dfactor);
-	}
+
+        RenderState::StateBlock::_defaultState->setBlend(true);
+        RenderState::StateBlock::_defaultState->setBlendSrc((RenderState::Blend)sfactor);
+        RenderState::StateBlock::_defaultState->setBlendDst((RenderState::Blend)dfactor);
+    }
 }
 
 void blendFunc(GLenum sfactor, GLenum dfactor)
@@ -131,7 +138,7 @@ void blendFunc(GLenum sfactor, GLenum dfactor)
 #endif // CC_ENABLE_GL_STATE_CACHE
 }
 
-void blendResetToCache(void)
+void blendResetToCache()
 {
 	glBlendEquation(GL_FUNC_ADD);
 #if CC_ENABLE_GL_STATE_CACHE
@@ -144,6 +151,15 @@ void blendResetToCache(void)
 void bindTexture2D(GLuint textureId)
 {
     GL::bindTexture2DN(0, textureId);
+}
+
+void bindTexture2D(Texture2D* texture)
+{
+    GL::bindTexture2DN(0, texture->getName());
+    auto alphaTexID = texture->getAlphaTextureName();
+    if (alphaTexID > 0) {
+        GL::bindTexture2DN(1, alphaTexID);
+    }
 }
 
 void bindTexture2DN(GLuint textureUnit, GLuint textureId)
@@ -194,7 +210,7 @@ void deleteTexture(GLuint textureId)
 	glDeleteTextures(1, &textureId);
 }
 
-void deleteTextureN(GLuint textureUnit, GLuint textureId)
+void deleteTextureN(GLuint /*textureUnit*/, GLuint textureId)
 {
     deleteTexture(textureId);
 }
@@ -254,7 +270,7 @@ void enableVertexAttribs(uint32_t flags)
 
 // GL Uniforms functions
 
-void setProjectionMatrixDirty( void )
+void setProjectionMatrixDirty()
 {
     s_currentProjectionMatrix = -1;
 }

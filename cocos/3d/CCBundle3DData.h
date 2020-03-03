@@ -1,5 +1,6 @@
 /****************************************************************************
- Copyright (c) 2014 Chukong Technologies Inc.
+ Copyright (c) 2014-2016 Chukong Technologies Inc.
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  
  http://www.cocos2d-x.org
  
@@ -59,14 +60,12 @@ struct MeshVertexAttrib
 struct ModelData
 {
     std::string subMeshId;
-    std::string matrialId;
+    std::string materialId;
     std::vector<std::string> bones;
     std::vector<Mat4>        invBindPose;
     
-    virtual ~ModelData()
-    {
-        resetData();
-    }
+    virtual ~ModelData() {}
+
     virtual void resetData()
     {
         bones.clear();
@@ -116,6 +115,11 @@ struct NodeDatas
 {
     std::vector<NodeData*> skeleton; //skeleton
     std::vector<NodeData*> nodes; // nodes, CCNode, Sprite3D or part of Sprite3D
+    
+    virtual ~NodeDatas()
+    {
+        resetData();
+    }
     
     void resetData()
     {
@@ -181,10 +185,6 @@ public:
     , numIndex(0)
     , attribCount(0)
     {
-    }
-    ~MeshData()
-    {
-        resetData();
     }
 };
 
@@ -320,7 +320,7 @@ struct NTextureData
      Usage type;
      GLenum wrapS;
      GLenum wrapT;
-} ;
+};
 struct NMaterialData
 {
     std::vector<NTextureData> textures;
@@ -367,7 +367,6 @@ public:
     {
         Vec3Key()
         : _time(0)
-        , _key(Vec3::ZERO)
         {
         }
         
@@ -435,14 +434,9 @@ public:
 */
 struct Reference
 {
-public:
     std::string id;
     unsigned int type;
     unsigned int offset;
-
-    Reference(){}
-
-    ~Reference(){}
 };
 
 NS_CC_END

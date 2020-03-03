@@ -1,5 +1,31 @@
+/****************************************************************************
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
+ 
+ http://www.cocos2d-x.org
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+ ****************************************************************************/
+
 #include "IntervalTest.h"
 #include "../testResource.h"
+
+USING_NS_CC;
 
 #define SID_STEP1    100
 #define SID_STEP2    101
@@ -7,7 +33,12 @@
 
 #define IDC_PAUSE    200
 
-IntervalLayer::IntervalLayer()
+IntervalTests::IntervalTests()
+{
+    ADD_TEST_CASE(IntervalTest);
+}
+
+IntervalTest::IntervalTest()
 {
     _time0 = _time1 = _time2 = _time3 = _time4 = 0.0f;
 
@@ -94,7 +125,7 @@ IntervalLayer::IntervalLayer()
     addChild( menu );
 }
 
-IntervalLayer::~IntervalLayer()
+IntervalTest::~IntervalTest()
 {
     if(Director::getInstance()->isPaused())
     {
@@ -102,19 +133,10 @@ IntervalLayer::~IntervalLayer()
     }
 }
 
-void IntervalLayer::update(float dt)
+void IntervalTest::update(float dt)
 {
     _time0 +=dt;
     char time[10] = {0};
     sprintf(time, "%2.1f", _time0);
     _label0->setString(time);
-}
-
-void IntervalTestScene::runThisTest()
-{
-    auto layer = new (std::nothrow) IntervalLayer();
-    addChild(layer);
-    layer->release();
-
-    Director::getInstance()->replaceScene(this);
 }

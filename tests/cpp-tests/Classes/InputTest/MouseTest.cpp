@@ -1,106 +1,38 @@
+/****************************************************************************
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
+ 
+ http://www.cocos2d-x.org
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+ ****************************************************************************/
+
 #include "MouseTest.h"
+
+USING_NS_CC;
 
 template <typename T> std::string tostr(const T& t) { std::ostringstream os; os<<t; return os.str(); }
 
-static int sceneIdx = -1;
-
-
-static std::function<Layer*()> createFunctions[] =
+MouseTests::MouseTests()
 {
-    CL(MouseEventTest),
-    CL(HideMouseTest)
-};
-
-#define MAX_LAYER    (sizeof(createFunctions) / sizeof(createFunctions[0]))
-
-static Layer* nextSpriteTestAction()
-{
-    sceneIdx++;
-    sceneIdx = sceneIdx % MAX_LAYER;
-    
-    auto layer = (createFunctions[sceneIdx])();
-    return layer;
-}
-
-static Layer* backSpriteTestAction()
-{
-    sceneIdx--;
-    int total = MAX_LAYER;
-    if( sceneIdx < 0 )
-        sceneIdx += total;
-    
-    auto layer = (createFunctions[sceneIdx])();
-    return layer;
-}
-
-static Layer* restartSpriteTestAction()
-{
-    auto layer = (createFunctions[sceneIdx])();
-    return layer;
-}
-
-
-//------------------------------------------------------------------
-//
-// BaseMouseTest
-//
-//------------------------------------------------------------------
-
-BaseMouseTest::BaseMouseTest(void)
-: BaseTest()
-{
-}
-
-BaseMouseTest::~BaseMouseTest(void)
-{
-}
-
-std::string BaseMouseTest::title() const
-{
-    return "No title";
-}
-
-std::string BaseMouseTest::subtitle() const
-{
-    return "";
-}
-
-void BaseMouseTest::onEnter()
-{
-    BaseTest::onEnter();
-}
-
-void BaseMouseTest::restartCallback(Ref* sender)
-{
-    auto s = new (std::nothrow) MouseTestScene();
-    s->addChild(restartSpriteTestAction());
-    
-    Director::getInstance()->replaceScene(s);
-    s->release();
-}
-
-void BaseMouseTest::nextCallback(Ref* sender)
-{
-    auto s = new (std::nothrow) MouseTestScene();
-    s->addChild( nextSpriteTestAction() );
-    Director::getInstance()->replaceScene(s);
-    s->release();
-}
-
-void BaseMouseTest::backCallback(Ref* sender)
-{
-    auto s = new (std::nothrow) MouseTestScene();
-    s->addChild( backSpriteTestAction() );
-    Director::getInstance()->replaceScene(s);
-    s->release();
-}
-
-void MouseTestScene::runThisTest()
-{
-    auto layer = nextSpriteTestAction();
-    addChild(layer);
-    
-    Director::getInstance()->replaceScene(this);
+    ADD_TEST_CASE(MouseEventTest);
+    ADD_TEST_CASE(HideMouseTest);
+    ADD_TEST_CASE(CursorTest);
 }
 
 //------------------------------------------------------------------
@@ -141,16 +73,16 @@ void MouseEventTest::onMouseDown(Event *event)
 {
     EventMouse* e = (EventMouse*)event;
     std::string str = "Mouse Down detected, Key: ";
-    str += tostr(e->getMouseButton());
-    _labelAction->setString(str.c_str());
+    str += tostr(static_cast<int>(e->getMouseButton()));
+    _labelAction->setString(str);
 }
 
 void MouseEventTest::onMouseUp(Event *event)
 {
     EventMouse* e = (EventMouse*)event;
     std::string str = "Mouse Up detected, Key: ";
-    str += tostr(e->getMouseButton());
-    _labelAction->setString(str.c_str());
+    str += tostr(static_cast<int>(e->getMouseButton()));
+    _labelAction->setString(str);
 }
 
 void MouseEventTest::onMouseMove(Event *event)
@@ -158,7 +90,7 @@ void MouseEventTest::onMouseMove(Event *event)
     EventMouse* e = (EventMouse*)event;
     std::string str = "MousePosition X:";
     str = str + tostr(e->getCursorX()) + " Y:" + tostr(e->getCursorY());
-    _labelPosition->setString(str.c_str());
+    _labelPosition->setString(str);
 }
 
 void MouseEventTest::onMouseScroll(Event *event)
@@ -166,7 +98,7 @@ void MouseEventTest::onMouseScroll(Event *event)
     EventMouse* e = (EventMouse*)event;
     std::string str = "Mouse Scroll detected, X: ";
     str = str + tostr(e->getScrollX()) + " Y: " + tostr(e->getScrollY());
-    _labelAction->setString(str.c_str());
+    _labelAction->setString(str);
 }
 
 std::string MouseEventTest::title() const
@@ -213,5 +145,48 @@ std::string HideMouseTest::title() const
 std::string HideMouseTest::subtitle() const
 {
     return "Click to hide mouse";
+}
+
+//------------------------------------------------------------------
+//
+// CursorTest
+//
+//------------------------------------------------------------------
+
+CursorTest::CursorTest()
+{
+    _cursor = 0;
+    _lis = EventListenerMouse::create();
+    _lis->onMouseDown = [this](Event* e){
+        _cursor = (_cursor + 1) % 3;
+        switch (_cursor) {
+            case 1:
+                Director::getInstance()->getOpenGLView()->setCursor("InputTest/cursor1.png");
+                break;
+            case 2:
+                Director::getInstance()->getOpenGLView()->setCursor("InputTest/cursor2.png", Point::ANCHOR_MIDDLE);
+                break;
+            default:
+                Director::getInstance()->getOpenGLView()->setDefaultCursor();
+                break;
+        }
+    };
+
+    _eventDispatcher->addEventListenerWithSceneGraphPriority(_lis, this);
+}
+
+CursorTest::~CursorTest()
+{
+    _eventDispatcher->removeEventListener(_lis);
+}
+
+std::string CursorTest::title() const
+{
+    return "Custom Mouse Cursor";
+}
+
+std::string CursorTest::subtitle() const
+{
+    return "Click to change cursor";
 }
 

@@ -1,3 +1,27 @@
+/****************************************************************************
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
+ 
+ http://www.cocos2d-x.org
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+ ****************************************************************************/
+
 //
 //  AppLang.cpp
 //  Simulator
@@ -8,9 +32,9 @@
 USING_NS_CC;
 
 AppLang::AppLang()
-    : _hasInit(false)
+    : _hasInit(false),
+    _localizationFileName("lang")
 {
-    _localizationFileName = "lang";
 }
 
 void AppLang::readLocalizationFile()
@@ -19,20 +43,21 @@ void AppLang::readLocalizationFile()
     {
         _hasInit = true;
         
-        std::string fullPathFile = FileUtils::getInstance()->fullPathForFilename(_localizationFileName.c_str());
-        if (fullPathFile.compare(_localizationFileName) == 0)
+        auto fileUtils = FileUtils::getInstance();
+        
+        if (!fileUtils->isFileExist(_localizationFileName))
         {
-            cocos2d::log("[WARNING]:\nnot find %s", this->_localizationFileName.c_str());
+            cocos2d::log("[WARNING]:not find %s", _localizationFileName.c_str());
             return;
         }
-        std::string fileContent = FileUtils::getInstance()->getStringFromFile(fullPathFile);
-        
+        auto fullFilePath = fileUtils->fullPathForFilename(_localizationFileName);
+        std::string fileContent = FileUtils::getInstance()->getStringFromFile(fullFilePath);
         if(fileContent.empty())
             return;
         
         if (_docRootjson.Parse<0>(fileContent.c_str()).HasParseError())
         {
-            cocos2d::log("[WARNING]:\nread json file %s failed because of %s", fullPathFile.c_str(), _docRootjson.GetParseError());
+            cocos2d::log("[WARNING]:read json file %s failed because of %d", _localizationFileName.c_str(), _docRootjson.GetParseError());
             return;
         }
     }
@@ -66,8 +91,7 @@ std::string AppLang::getString(const std::string &lang, const std::string &key)
     {
         const rapidjson::Value& v = _docRootjson[langKey];
         if (v.HasMember(ckey))
-        { 
-            std::string tmpv = v[ckey].GetString();
+        {
             return v[ckey].GetString();
         }
     }

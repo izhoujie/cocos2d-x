@@ -1,6 +1,7 @@
 /****************************************************************************
  Copyright (C) 2013 Henry van Merode. All rights reserved.
- Copyright (c) 2015 Chukong Technologies Inc.
+ Copyright (c) 2015-2016 Chukong Technologies Inc.
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  
  http://www.cocos2d-x.org
  
@@ -44,8 +45,8 @@ public:
     //Constructor
     PURibbonTrailVisualData (Node* sceneNode, PURibbonTrail* ribbonTrail) : 
         node(sceneNode),
-        trail(ribbonTrail),
         addedToTrail(false),
+        trail(ribbonTrail),
         index(0){};
 
     Node* node;
@@ -70,7 +71,7 @@ public:
                 addedToTrail = false;
             }
         }
-    };
+    }
 };
 
 // particle render for quad
@@ -100,33 +101,33 @@ public:
 
     /** Getters and Setters
     */
-    bool isUseVertexColors(void) const;
+    bool isUseVertexColors() const;
     void setUseVertexColors(bool useVertexColours);
 
-    size_t getMaxChainElements(void) const;
+    size_t getMaxChainElements() const;
     void setMaxChainElements(size_t maxChainElements);
 
-    float getTrailLength(void) const;
+    float getTrailLength() const;
     void setTrailLength(float trailLength);
 
-    float getTrailWidth(void) const;
+    float getTrailWidth() const;
     void setTrailWidth(float trailWidth);
 
-    bool isRandomInitialColor(void) const;
+    bool isRandomInitialColor() const;
     void setRandomInitialColor(bool randomInitialColour);
 
-    const Vec4& getInitialColor(void) const;
+    const Vec4& getInitialColor() const;
     void setInitialColor(const Vec4& initialColour);
 
-    const Vec4& getColorChange(void) const;
+    const Vec4& getColorChange() const;
     void setColorChange(const Vec4& colourChange);
 
         /** Deletes all ChildSceneNodes en Entities.
     */
-    void destroyAll(void);
+    void destroyAll();
 
     virtual PURibbonTrailRender* clone() override;
-    virtual void copyAttributesTo (PURender *render) override;
+    void copyAttributesTo(PURibbonTrailRender *render);
 
 CC_CONSTRUCTOR_ACCESS:
     PURibbonTrailRender();

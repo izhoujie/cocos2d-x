@@ -1,5 +1,6 @@
 /****************************************************************************
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -35,18 +36,21 @@ THE SOFTWARE.
 NS_CC_BEGIN
 
 class Label;
+class SpriteFrame;
+struct CC_DLL ResourceData;
 
 namespace ui{
-    
+
     class Scale9Sprite;
 /**
- * Represents a push-button widget. Push-buttons can be pressed, or clicked, by the user to perform an action.
+ * Represents a push-button widget.
+ * Push-buttons can be pressed, or clicked, by the user to perform an action.
  */
 class CC_GUI_DLL Button : public Widget
 {
-    
+
     DECLARE_CLASS_GUI_INFO
-    
+
 public:
 
     /**
@@ -66,7 +70,7 @@ public:
      *@return A empty Button instance.
      */
     static Button* create();
-    
+
     /**
      * Create a button with custom textures.
      * @param normalImage normal state texture name.
@@ -79,7 +83,7 @@ public:
                           const std::string& selectedImage = "",
                           const std::string& disableImage = "",
                           TextureResType texType = TextureResType::LOCAL);
-    
+
     /**
      * Load textures for button.
      *
@@ -189,7 +193,7 @@ public:
     virtual Size getVirtualRendererSize() const override;
     virtual Node* getVirtualRenderer() override;
     virtual std::string getDescription() const override;
-    
+
     /**
      * Return the inner title renderer of Button.
      * @return The button title.
@@ -207,7 +211,7 @@ public:
      * Query the button title content.
      *@return Get the button's title content.
      */
-    const std::string& getTitleText() const;
+    std::string getTitleText() const;
 
     /**
      * Change the color of button's title.
@@ -243,7 +247,29 @@ public:
      * Query the font name of button's title
      *@return font name in std::string
      */
-    const std::string& getTitleFontName() const;
+    std::string getTitleFontName() const;
+
+    /**
+     * Sets the title's text horizontal alignment.
+     *
+     * @param hAlignment see TextHAlignment
+     */
+    void setTitleAlignment(TextHAlignment hAlignment);
+
+    /**
+     * Sets the title's text vertical alignment.
+     *
+     * @param hAlignment see TextHAlignment.
+     * @param vAlignment see TextVAlignment.
+     */
+    void setTitleAlignment(TextHAlignment hAlignment, TextVAlignment vAlignment);
+
+    /** replaces the current Label node with a new one */
+    void setTitleLabel(Label* label);
+
+    /** returns the current Label being used */
+    Label* getTitleLabel() const;
+
 
     /** @brief When user pressed the button, the button will zoom to a scale.
      * The final scale of the button  equals (button original scale + _zoomScale)
@@ -252,12 +278,41 @@ public:
     void setZoomScale(float scale);
 
     /**
-     * @brief Return a zoom scale 
+     * @brief Return a zoom scale
      * @return the zoom scale in float
      * @since v3.3
      */
     float getZoomScale()const;
     
+    /**
+     * @brief Return the nine-patch sprite of normal state
+     * @return the nine-patch sprite of normal state
+     * @since v3.9
+     */
+    Scale9Sprite* getRendererNormal() const { return _buttonNormalRenderer; }
+    
+    /**
+     * @brief Return the nine-patch sprite of clicked state
+     * @return the nine-patch sprite of clicked state
+     * @since v3.9
+     */
+    Scale9Sprite* getRendererClicked() const { return _buttonClickedRenderer; }
+    
+    /**
+     * @brief Return the nine-patch sprite of disabled state
+     * @return the nine-patch sprite of disabled state
+     * @since v3.9
+     */
+    Scale9Sprite* getRendererDisabled() const { return _buttonDisabledRenderer; }
+
+    void resetNormalRender();
+    void resetPressedRender();
+    void resetDisabledRender();
+
+    ResourceData getNormalFile();
+    ResourceData getPressedFile();
+    ResourceData getDisabledFile();
+
 CC_CONSTRUCTOR_ACCESS:
     virtual bool init() override;
     virtual bool init(const std::string& normalImage,
@@ -273,45 +328,47 @@ protected:
     virtual void onPressStateChangedToPressed() override;
     virtual void onPressStateChangedToDisabled() override;
     virtual void onSizeChanged() override;
-  
+
+    void loadTextureNormal(SpriteFrame* normalSpriteFrame);
+    void setupNormalTexture(bool textureLoaded);
+    void loadTexturePressed(SpriteFrame* pressedSpriteFrame);
+    void setupPressedTexture(bool textureLoaded);
+    void loadTextureDisabled(SpriteFrame* disabledSpriteFrame);
+    void setupDisabledTexture(bool textureLoaded);
+
     void normalTextureScaleChangedWithSize();
     void pressedTextureScaleChangedWithSize();
     void disabledTextureScaleChangedWithSize();
-    
+
     virtual void adaptRenderers() override;
-    void updateTitleLocation();
+    virtual void updateTitleLocation();
     void updateContentSize();
-    
+    virtual void createTitleRenderer();
+    bool createTitleRendererIfNull();
+
     virtual Widget* createCloneInstance() override;
     virtual void copySpecialProperties(Widget* model) override;
-   
+
     virtual Size getNormalSize() const;
 protected:
     Scale9Sprite* _buttonNormalRenderer;
     Scale9Sprite* _buttonClickedRenderer;
-    Scale9Sprite* _buttonDisableRenderer;
+    Scale9Sprite* _buttonDisabledRenderer;
     Label* _titleRenderer;
-   
+
     float _zoomScale;
-    std::string _normalFileName;
-    std::string _clickedFileName;
-    std::string _disabledFileName;
     bool _prevIgnoreSize;
     bool _scale9Enabled;
+    bool _pressedActionEnabled;
+
     Rect _capInsetsNormal;
     Rect _capInsetsPressed;
     Rect _capInsetsDisabled;
-    TextureResType _normalTexType;
-    TextureResType _pressedTexType;
-    TextureResType _disabledTexType;
+
     Size _normalTextureSize;
     Size _pressedTextureSize;
     Size _disabledTextureSize;
-    bool _pressedActionEnabled;
-    float _normalTextureScaleXInSize;
-    float _normalTextureScaleYInSize;
-    float _pressedTextureScaleXInSize;
-    float _pressedTextureScaleYInSize;
+
     bool _normalTextureLoaded;
     bool _pressedTextureLoaded;
     bool _disabledTextureLoaded;
@@ -319,16 +376,15 @@ protected:
     bool _pressedTextureAdaptDirty;
     bool _disabledTextureAdaptDirty;
 
-private:
-    enum class FontType
-    {
-        SYSTEM,
-        TTF
-    };
+    std::string _normalFileName;
+    std::string _clickedFileName;
+    std::string _disabledFileName;
+    TextureResType _normalTexType;
+    TextureResType _pressedTexType;
+    TextureResType _disabledTexType;
 
+private:
     std::string _fontName;
-    int _fontSize;
-    FontType _type;
 };
 
 }

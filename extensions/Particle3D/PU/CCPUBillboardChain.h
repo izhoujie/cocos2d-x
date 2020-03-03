@@ -1,6 +1,7 @@
 /****************************************************************************
  Copyright (C) 2013 Henry van Merode. All rights reserved.
- Copyright (c) 2015 Chukong Technologies Inc.
+ Copyright (c) 2015-2016 Chukong Technologies Inc.
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  
  http://www.cocos2d-x.org
  
@@ -26,9 +27,11 @@
 #ifndef __CC_PU_PARTICLE_3D_BILLBOARD_CHAIN_H__
 #define __CC_PU_PARTICLE_3D_BILLBOARD_CHAIN_H__
 
+#include <vector>
+#include "renderer/CCRenderState.h"
 #include "base/CCRef.h"
 #include "math/CCMath.h"
-#include <vector>
+
 
 NS_CC_BEGIN
 
@@ -54,11 +57,11 @@ public:
 
         Element();
 
-        Element(const Vec3 &position,
+        Element(const Vec3& position,
             float width,
             float texCoord,
-            const Vec4 &colour,
-            const Quaternion &orientation);
+            const Vec4& colour,
+            const Quaternion& orientation);
 
         Vec3 position;
         float width;
@@ -79,7 +82,7 @@ public:
     @param useVertexColours If true, use vertex colours from the chain elements
     @param dynamic If true, buffers are created with the intention of being updated
     */
-    PUBillboardChain(const std::string& name, const std::string &texFile = "", size_t maxElements = 20, size_t numberOfChains = 1, 
+    PUBillboardChain(const std::string& name, const std::string& texFile = "", size_t maxElements = 20, size_t numberOfChains = 1,
         bool useTextureCoords = true, bool useColours = true, bool dynamic = true);
     /// destructor
     virtual ~PUBillboardChain();
@@ -89,7 +92,7 @@ public:
     virtual void setMaxChainElements(size_t maxElements);
     /** Get the maximum number of chain elements per chain 
     */
-    virtual size_t getMaxChainElements(void) const { return _maxElementsPerChain; }
+    virtual size_t getMaxChainElements() const { return _maxElementsPerChain; }
     /** Set the number of chain segments (this class can render multiple chains
         at once using the same material). 
     */
@@ -97,7 +100,7 @@ public:
     /** Get the number of chain segments (this class can render multiple chains
     at once using the same material). 
     */
-    virtual size_t getNumberOfChains(void) const { return _chainCount; }
+    virtual size_t getNumberOfChains() const { return _chainCount; }
 
     /** Sets whether texture coordinate information should be included in the
         final buffers generated.
@@ -109,7 +112,7 @@ public:
     /** Gets whether texture coordinate information should be included in the
         final buffers generated.
     */
-    virtual bool getUseTextureCoords(void) const { return _useTexCoords; }
+    virtual bool getUseTextureCoords() const { return _useTexCoords; }
 
     /** The direction in which texture coordinates from elements of the
         chain are used.
@@ -129,7 +132,7 @@ public:
     /** Gets the direction in which texture coords specified on each element
         are deemed to run.
     */
-    virtual TexCoordDirection getTextureCoordDirection(void) { return _texCoordDir; }
+    virtual TexCoordDirection getTextureCoordDirection() { return _texCoordDir; }
 
     /** Set the range of the texture coordinates generated across the width of
         the chain elements.
@@ -140,7 +143,7 @@ public:
     /** Get the range of the texture coordinates generated across the width of
         the chain elements.
     */
-    virtual const float* getOtherTextureCoordRange(void) const { return _otherTexCoordRange; }
+    virtual const float* getOtherTextureCoordRange() const { return _otherTexCoordRange; }
 
     /** Sets whether vertex colour information should be included in the
         final buffers generated.
@@ -152,7 +155,7 @@ public:
     /** Gets whether vertex colour information should be included in the
         final buffers generated.
     */
-    virtual bool getUseVertexColours(void) const { return _useVertexColour; }
+    virtual bool getUseVertexColours() const { return _useVertexColour; }
 
     /** Sets whether or not the buffers created for this object are suitable
         for dynamic alteration.
@@ -162,7 +165,7 @@ public:
     /** Gets whether or not the buffers created for this object are suitable
         for dynamic alteration.
     */
-    virtual bool getDynamic(void) const { return _dynamic; }
+    virtual bool getDynamic() const { return _dynamic; }
         
     /** Add an element to the 'head' of a chain.
     @remarks
@@ -199,7 +202,7 @@ public:
     /** Remove all elements of a given chain (but leave the chain intact). */
     virtual void clearChain(size_t chainIndex);
     /** Remove all elements from all chains (but leave the chains themselves intact). */
-    virtual void clearAllChains(void);
+    virtual void clearAllChains();
 
     /** Sets whether the billboard should always be facing the camera or a custom direction
         set by each point element.
@@ -217,34 +220,37 @@ public:
     matrix, the segment corresponding to that point will be facing towards UNIT_Z
     This vector is internally normalized.
     */
-    void setFaceCamera( bool faceCamera, const Vec3 &normalVector=Vec3::UNIT_X );
+    void setFaceCamera( bool faceCamera, const Vec3& normalVector=Vec3::UNIT_X );
 
-    virtual void setDepthTest(bool isDepthTest);
-    virtual void setDepthWrite(bool isDepthWrite);
+    void setDepthTest(bool isDepthTest);
+    void setDepthWrite(bool isDepthWrite);
+    void setBlendFunc(const BlendFunc& blendFunc);
 
-    void render(Renderer* renderer, const Mat4 &transform, ParticleSystem3D* particleSystem);
+    void render(Renderer* renderer, const Mat4& transform, ParticleSystem3D* particleSystem);
 
     // Overridden members follow
-    //void _updateRenderQueue(RenderQueue *);
-    //void getRenderOperation(RenderOperation &);
+    //void _updateRenderQueue(RenderQueue*);
+    //void getRenderOperation(RenderOperation&);
     //virtual bool preRender(SceneManager* sm, RenderSystem* rsys);
-    //void getWorldTransforms(Matrix4 *) const;
+    //void getWorldTransforms(Matrix4*) const;
     /// @copydoc MovableObject::visitRenderables
+
+    GLuint getTextureName();
 
 protected:
 
     /// Setup the STL collections
-    virtual void setupChainContainers(void);
+    virtual void setupChainContainers();
     /// Setup vertex declaration
-    virtual void setupVertexDeclaration(void);
+    virtual void setupVertexDeclaration();
     // Setup buffers
-    virtual void setupBuffers(void);
+    virtual void setupBuffers();
     /// Update the contents of the vertex buffer
-    virtual void updateVertexBuffer(const Mat4 &camMat);
+    virtual void updateVertexBuffer(const Mat4& camMat);
     /// Update the contents of the index buffer
-    virtual void updateIndexBuffer(void);
+    virtual void updateIndexBuffer();
 
-    void init(const std::string &texFile);
+    void init(const std::string& texFile);
 
 protected:
 
@@ -312,14 +318,17 @@ protected:
         Vec2 uv;
         Vec4 color;
     };
-    MeshCommand* _meshCommand;
-    Texture2D*             _texture;
-    GLProgramState*        _glProgramState;
-    IndexBuffer*           _indexBuffer; //index buffer
-    VertexBuffer*          _vertexBuffer; // vertex buffer
+    MeshCommand*            _meshCommand;
+    RenderState::StateBlock* _stateBlock;
+    Texture2D*              _texture;
+    GLProgramState*         _glProgramState;
+    IndexBuffer*            _indexBuffer; //index buffer
+    VertexBuffer*           _vertexBuffer; // vertex buffer
 
     std::vector<VertexInfo> _vertices;
     std::vector<unsigned short> _indices;
+
+    std::string            _texFile;
 };
 
 NS_CC_END

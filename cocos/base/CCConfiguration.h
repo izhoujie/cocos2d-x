@@ -1,7 +1,8 @@
 /****************************************************************************
 Copyright (c) 2010      Ricardo Quesada
 Copyright (c) 2010-2012 cocos2d-x.org
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -32,12 +33,15 @@ THE SOFTWARE.
 #include "base/CCRef.h"
 #include "base/CCValue.h"
 #include "platform/CCGL.h"
+#include "3d/CCAnimate3D.h"
 
 /**
  * @addtogroup base
  * @{
  */
 NS_CC_BEGIN
+
+class EventCustom;
 
 /** @class Configuration
  * @brief Configuration contains some openGL variables
@@ -142,6 +146,31 @@ public:
      * @since v2.0.0
      */
 	bool supportsShareableVAO() const;
+
+    /** Whether or not OES_depth24 is supported.
+     *
+     * @return Is true if supports OES_depth24.
+     * @since v2.0.0
+     */
+    bool supportsOESDepth24() const;
+    
+    /** Whether or not OES_Packed_depth_stencil is supported.
+     *
+     * @return Is true if supports OES_Packed_depth_stencil.
+     * @since v2.0.0
+     */
+    bool supportsOESPackedDepthStencil() const;
+
+    /** Whether or not glMapBuffer() is supported.
+     *
+     * On Desktop it returns `true`.
+     * On Mobile it checks for the extension `GL_OES_mapbuffer`
+     *
+     * @return Whether or not `glMapBuffer()` is supported.
+     * @since v3.13
+     */
+    bool supportsMapBuffer() const;
+
     
     /** Max support directional light in shader, for Sprite3D.
      *
@@ -164,11 +193,8 @@ public:
      */
     int getMaxSupportSpotLightInShader() const;
 
-    /** is 3d animate quality? Configure it in the config.plist, the key is cocos2d.x.3d.animate_high_quality, it is true by default. 
-     * Animation quality of created Animate3D is based on the return value. However, animation quality of Animate3D can be modified by calling setHighQuality after it is created.
-     *  @return true: is high quality, false: is low quality
-     */
-    bool isHighAnimate3DQuality() const;
+    /** get 3d animate quality*/
+    Animate3DQuality getAnimate3DQuality() const;
     
     /** Returns whether or not an OpenGL is supported. 
      *
@@ -203,6 +229,15 @@ public:
      * @return The Configuration info.
      */
     std::string getInfo() const;
+    
+    /**
+     Returns the configuration as value map
+     @return the configuration map
+     @since 3.18
+     @js NA
+     @lua NA
+    */
+    const ValueMap& getInfoAsMap()const { return _valueDict; }
 
 	/** Gathers OpenGL / GPU information.
      */
@@ -213,9 +248,11 @@ public:
      * @param filename Config file name.
      */
 	void loadConfigFile(const std::string& filename);
+    
+    static const char* CONFIG_FILE_LOADED;
 
 private:
-    Configuration(void);
+    Configuration();
     static Configuration    *s_sharedConfiguration;
 	static std::string		s_configfile;
     
@@ -230,15 +267,21 @@ protected:
     bool            _supportsBGRA8888;
     bool            _supportsDiscardFramebuffer;
     bool            _supportsShareableVAO;
+    bool            _supportsOESMapBuffer;
+    bool            _supportsOESDepth24;
+    bool            _supportsOESPackedDepthStencil;
+    
     GLint           _maxSamplesAllowed;
     GLint           _maxTextureUnits;
     char *          _glExtensions;
     int             _maxDirLightInShader; //max support directional light in shader
     int             _maxPointLightInShader; // max support point light in shader
     int             _maxSpotLightInShader; // max support spot light in shader
-    bool            _isAnimate3DHighQuality; // animation 3d quality, true: is high quality, false: is low quality
+    Animate3DQuality  _animate3DQuality; // animate 3d quality
 	
 	ValueMap        _valueDict;
+    
+    EventCustom*    _loadedEvent;
 };
 
 

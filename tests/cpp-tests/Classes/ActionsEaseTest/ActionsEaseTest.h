@@ -1,6 +1,7 @@
 /****************************************************************************
  Copyright (c) 2012 cocos2d-x.org
- Copyright (c) 2013-2014 Chukong Technologies Inc.
+ Copyright (c) 2013-2016 Chukong Technologies Inc.
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
  http://www.cocos2d-x.org
 
@@ -26,18 +27,16 @@
 #ifndef _ACTIONS__EASE_TEST_H_
 #define _ACTIONS__EASE_TEST_H_
 
-////----#include "cocos2d.h"
-#include "../testBasic.h"
 #include "../BaseTest.h"
 
-USING_NS_CC;
+DEFINE_TEST_SUITE(ActionsEaseTests);
 
-class EaseSpriteDemo : public BaseTest
+class EaseSpriteDemo : public TestCase
 {
 protected:
-    Sprite*    _grossini;
-    Sprite*    _tamara;
-    Sprite*    _kathia;
+    cocos2d::Sprite*    _grossini;
+    cocos2d::Sprite*    _tamara;
+    cocos2d::Sprite*    _kathia;
 
     std::string    _title;
 
@@ -49,10 +48,6 @@ public:
     virtual void onEnter() override;
     
     void centerSprites(unsigned int numberOfSprites);
-    
-    void restartCallback(Ref* sender) override;
-    void nextCallback(Ref* sender) override;
-    void backCallback(Ref* sender) override;
 
     void positionForTwo();
 };
@@ -60,6 +55,8 @@ public:
 class SpriteEase : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEase);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 
@@ -69,6 +66,8 @@ public:
 class SpriteEaseInOut : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseInOut);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -76,6 +75,8 @@ public:
 class SpriteEaseExponential : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseExponential);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -83,6 +84,8 @@ public:
 class SpriteEaseExponentialInOut : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseExponentialInOut);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -90,6 +93,8 @@ public:
 class SpriteEaseSine : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseSine);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -97,6 +102,8 @@ public:
 class SpriteEaseSineInOut : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseSineInOut);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -104,6 +111,8 @@ public:
 class SpriteEaseElastic : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseElastic);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -111,6 +120,8 @@ public:
 class SpriteEaseElasticInOut : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseElasticInOut);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -118,6 +129,8 @@ public:
 class SpriteEaseBounce : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseBounce);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -125,6 +138,8 @@ public:
 class SpriteEaseBounceInOut : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseBounceInOut);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -132,6 +147,8 @@ public:
 class SpriteEaseBack : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseBack);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -139,6 +156,8 @@ public:
 class SpriteEaseBackInOut : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseBackInOut);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -146,6 +165,8 @@ public:
 class SpriteEaseBezier : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseBezier);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -153,6 +174,8 @@ public:
 class SpriteEaseQuadratic : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseQuadratic);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -160,6 +183,8 @@ public:
 class SpriteEaseQuadraticInOut : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseQuadraticInOut);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -167,6 +192,8 @@ public:
 class SpriteEaseQuartic : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseQuartic);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -174,6 +201,8 @@ public:
 class SpriteEaseQuarticInOut : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseQuarticInOut);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -181,6 +210,8 @@ public:
 class SpriteEaseQuintic : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseQuintic);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -188,6 +219,8 @@ public:
 class SpriteEaseQuinticInOut : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseQuinticInOut);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -196,6 +229,8 @@ public:
 class SpriteEaseCircle : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseCircle);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -203,6 +238,8 @@ public:
 class SpriteEaseCircleInOut : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseCircleInOut);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -210,6 +247,8 @@ public:
 class SpriteEaseCubic : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseCubic);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 };
@@ -217,22 +256,20 @@ public:
 class SpriteEaseCubicInOut : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpriteEaseCubicInOut);
+
     void onEnter() override;
     virtual std::string title() const override;
 };
 class SpeedTest : public EaseSpriteDemo
 {
 public:
+    CREATE_FUNC(SpeedTest);
+
     void onEnter() override;
     virtual std::string subtitle() const override;
 
     void altertime(float dt);
-};
-
-class ActionsEaseTestScene : public TestScene
-{
-public:
-    virtual void runThisTest();
 };
 
 

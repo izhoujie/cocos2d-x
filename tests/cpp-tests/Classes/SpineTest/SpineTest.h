@@ -27,97 +27,86 @@
 #define _SPINETEST_H_
 
 #include "cocos2d.h"
-#include "../testBasic.h"
 #include "../BaseTest.h"
-#include <spine/spine-cocos2dx.h>
+#include "spine/spine-cocos2dx.h"
 
-class SpineTestScene : public TestScene
+DEFINE_TEST_SUITE(SpineTests);
+
+class SpineTestLayer : public TestCase
 {
 public:
-    virtual void runThisTest();
-};
-
-class SpineTestSceneFFD : public TestScene
-{
-public:
-    virtual void runThisTest();
-};
-
-class SpineTestLayer : public BaseTest
-{
+    SpineTestLayer();
+    
+    virtual std::string title() const;
 protected:
     std::string    _title;
-    
-public:
-    SpineTestLayer(void);
-    virtual ~SpineTestLayer(void);
-    
-    void restartCallback(Ref* sender) override;
-    void nextCallback(Ref* sender) override;
-    void backCallback(Ref* sender) override;
-    
-    // overrides
-    virtual std::string title() const override;
-    virtual std::string subtitle() const override;
-    virtual void onEnter() override;
 };
 
-class SpineTestLayerNormal: public SpineTestLayer {
-private:
-	spine::SkeletonAnimation* skeletonNode;
-    
+class BatchingExample: public SpineTestLayer {
 public:
-    virtual std::string title() const override
-    {
-        return "Spine Test";
-    }
-    virtual std::string subtitle() const override
-    {
-        return "Normal Spine";
-    }
-	virtual bool init () override;
-	virtual void update (float deltaTime) override;
-    //    void animationStateEvent (spine::SkeletonAnimation* node, int trackIndex, spEventType type, spEvent* event, int loopCount);
+    CREATE_FUNC(BatchingExample);
+    ~BatchingExample ();
     
-	CREATE_FUNC (SpineTestLayerNormal);
+    virtual bool init ();
+    
+protected:
+    spAtlas* _atlas;
+    spAttachmentLoader* _attachmentLoader;
+    spSkeletonData* _skeletonData;
+    spAnimationStateData* _stateData;
 };
 
-class SpineTestLayerFFD: public SpineTestLayer {
-private:
-	spine::SkeletonAnimation* skeletonNode;
-    
-public:
-    virtual std::string title() const override
-    {
-        return "Spine Test";
-    }
-    virtual std::string subtitle() const override
-    {
-        return "FFD Spine";
-    }
-	virtual bool init () override;
-	virtual void update (float deltaTime) override;
-    //    void animationStateEvent (spine::SkeletonAnimation* node, int trackIndex, spEventType type, spEvent* event, int loopCount);
-    
-	CREATE_FUNC (SpineTestLayerFFD);
-};
-
-class SpineTestPerformanceLayer: public SpineTestLayer
+class CoinExample: public SpineTestLayer
 {
 public:
-    virtual std::string title() const override
-    {
-        return "Spine Test";
-    }
-    virtual std::string subtitle() const override
-    {
-        return "Performance Test for Spine";
-    }
-	virtual bool init () override;
-	virtual void update (float deltaTime) override;
-    //    void animationStateEvent (spine::SkeletonAnimation* node, int trackIndex, spEventType type, spEvent* event, int loopCount);
+    CREATE_FUNC(CoinExample);
     
-	CREATE_FUNC (SpineTestPerformanceLayer);
+    virtual bool init();
+    
+private:
+    spine::SkeletonAnimation* skeletonNode;
+};
+
+class GoblinsExample : public SpineTestLayer {
+public:
+    CREATE_FUNC(GoblinsExample);
+    
+    virtual bool init ();
+    
+private:
+    spine::SkeletonAnimation* skeletonNode;
+};
+
+class RaptorExample : public SpineTestLayer {
+public:
+    CREATE_FUNC(RaptorExample);
+    
+    virtual bool init ();
+    
+private:
+    spine::SkeletonAnimation* skeletonNode;
+};
+
+class SpineboyExample : public SpineTestLayer {
+public:
+    CREATE_FUNC (SpineboyExample);
+    
+    virtual bool init ();
+    
+    virtual void update (float deltaTime);
+    
+private:
+    spine::SkeletonAnimation* skeletonNode;
+};
+
+class TankExample : public SpineTestLayer {
+public:
+    CREATE_FUNC(TankExample);
+    
+    virtual bool init ();
+    
+private:
+    spine::SkeletonAnimation* skeletonNode;
 };
 
 #endif // _EXAMPLELAYER_H_

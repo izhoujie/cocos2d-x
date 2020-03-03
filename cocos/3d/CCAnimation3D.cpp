@@ -1,5 +1,6 @@
 /****************************************************************************
- Copyright (c) 2014 Chukong Technologies Inc.
+ Copyright (c) 2014-2016 Chukong Technologies Inc.
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
  http://www.cocos2d-x.org
 
@@ -58,6 +59,8 @@ bool Animation3D::initWithFile(const std::string& filename, const std::string& a
     Animation3DData animationdata;
     if (bundle->load(fullPath) && bundle->loadAnimationData(animationName, &animationdata) && init(animationdata))
     {
+        std::string key = fullPath + "#" + animationName;
+        Animation3DCache::getInstance()->addAnimation(key, this);
         Bundle3D::destroyBundle(bundle);
         return true;
     }
@@ -84,8 +87,9 @@ Animation3D::Animation3D()
 
 Animation3D::~Animation3D()
 {
-    for (auto itor : _boneCurves) {
-        CC_SAFE_DELETE(itor.second);
+    for (const auto& itor : _boneCurves) {
+        Curve* curve = itor.second;
+        CC_SAFE_DELETE(curve);
     }
 }
 
@@ -116,7 +120,7 @@ bool Animation3D::init(const Animation3DData &data)
             _boneCurves[iter.first] = curve;
         }
         
-        if(iter.second.size() == 0) continue;
+        if(iter.second.empty()) continue;
         std::vector<float> keys;
         std::vector<float> values;
         for(const auto& keyIter : iter.second)
@@ -140,7 +144,7 @@ bool Animation3D::init(const Animation3DData &data)
             _boneCurves[iter.first] = curve;
         }
         
-        if(iter.second.size() == 0) continue;
+        if(iter.second.empty()) continue;
         std::vector<float> keys;
         std::vector<float> values;
         for(const auto& keyIter : iter.second)
@@ -165,7 +169,7 @@ bool Animation3D::init(const Animation3DData &data)
             _boneCurves[iter.first] = curve;
         }
         
-        if(iter.second.size() == 0) continue;
+        if(iter.second.empty()) continue;
         std::vector<float> keys;
         std::vector<float> values;
         for(const auto& keyIter : iter.second)
@@ -230,7 +234,7 @@ void Animation3DCache::removeUnusedAnimation()
         if (itor->second->getReferenceCount() == 1)
         {
             itor->second->release();
-            _animations.erase(itor++);
+            itor = _animations.erase(itor);
         }
         else
             ++itor;

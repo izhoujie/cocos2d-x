@@ -89,7 +89,7 @@
 --------------------------------
 -- @overload self, string, function         
 -- @overload self, string         
--- @function [parent=#CSLoader] createNode
+-- @function [parent=#CSLoader] createNodeWithVisibleSize
 -- @param self
 -- @param #string filename
 -- @param #function callback

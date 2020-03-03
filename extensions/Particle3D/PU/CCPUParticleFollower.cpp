@@ -1,6 +1,7 @@
 /****************************************************************************
  Copyright (C) 2013 Henry van Merode. All rights reserved.
- Copyright (c) 2015 Chukong Technologies Inc.
+ Copyright (c) 2015-2016 Chukong Technologies Inc.
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  
  http://www.cocos2d-x.org
  
@@ -33,21 +34,20 @@ const float PUParticleFollower::DEFAULT_MAX_DISTANCE = 3.40282e+038f;
 const float PUParticleFollower::DEFAULT_MIN_DISTANCE = 10.0f;
 
 //-----------------------------------------------------------------------
-PUParticleFollower::PUParticleFollower(void) : 
+PUParticleFollower::PUParticleFollower() : 
     PUAffector(),
     _minDistance(DEFAULT_MIN_DISTANCE),
     _maxDistance(DEFAULT_MAX_DISTANCE),
-    _positionPreviousParticle(Vec3::ZERO),
     _first(false)
 {
 }
 
-PUParticleFollower::~PUParticleFollower( void )
+PUParticleFollower::~PUParticleFollower()
 {
 
 }
 //-----------------------------------------------------------------------
-float PUParticleFollower::getMaxDistance(void) const
+float PUParticleFollower::getMaxDistance() const
 {
     return _maxDistance;
 }
@@ -57,7 +57,7 @@ void PUParticleFollower::setMaxDistance(float maxDistance)
     _maxDistance = maxDistance;
 }
 //-----------------------------------------------------------------------
-float PUParticleFollower::getMinDistance(void) const
+float PUParticleFollower::getMinDistance() const
 {
     return _minDistance;
 }
@@ -67,7 +67,7 @@ void PUParticleFollower::setMinDistance(float minDistance)
     _minDistance = minDistance;
 }
 
-void PUParticleFollower::updatePUAffector( PUParticle3D *particle, float deltaTime )
+void PUParticleFollower::updatePUAffector( PUParticle3D *particle, float /*deltaTime*/ )
 {
     //_first = true;
     //for (auto iter : _particleSystem->getParticles())
@@ -92,7 +92,7 @@ void PUParticleFollower::updatePUAffector( PUParticle3D *particle, float deltaTi
     }
 }
 
-void PUParticleFollower::firstParticleUpdate( PUParticle3D *particle, float deltaTime )
+void PUParticleFollower::firstParticleUpdate( PUParticle3D* /*particle*/, float /*deltaTime*/ )
 {
     _first = true;
 }

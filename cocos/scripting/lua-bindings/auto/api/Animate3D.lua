@@ -5,18 +5,24 @@
 -- @parent_module cc
 
 --------------------------------
+-- 
+-- @function [parent=#Animate3D] setKeyFrameUserInfo 
+-- @param self
+-- @param #int keyFrame
+-- @param #map_table userInfo
+-- @return Animate3D#Animate3D self (return value: cc.Animate3D)
+        
+--------------------------------
 -- get & set speed, negative speed means playing reverse 
 -- @function [parent=#Animate3D] getSpeed 
 -- @param self
 -- @return float#float ret (return value: float)
         
 --------------------------------
--- set high quality<br>
--- The default value is based on Configuration::isHighAnimate3DQuality(). You can configure it in the config.plist. However, you can modify it using the following function<br>
--- param true: is high quality, false: is low quality.
--- @function [parent=#Animate3D] setHighQuality 
+-- set animate quality
+-- @function [parent=#Animate3D] setQuality 
 -- @param self
--- @param #bool isHighQuality
+-- @param #int quality
 -- @return Animate3D#Animate3D self (return value: cc.Animate3D)
         
 --------------------------------
@@ -25,6 +31,22 @@
 -- @param self
 -- @param #float weight
 -- @return Animate3D#Animate3D self (return value: cc.Animate3D)
+        
+--------------------------------
+-- 
+-- @function [parent=#Animate3D] removeFromMap 
+-- @param self
+-- @return Animate3D#Animate3D self (return value: cc.Animate3D)
+        
+--------------------------------
+-- 
+-- @function [parent=#Animate3D] initWithFrames 
+-- @param self
+-- @param #cc.Animation3D animation
+-- @param #int startFrame
+-- @param #int endFrame
+-- @param #float frameRate
+-- @return bool#bool ret (return value: bool)
         
 --------------------------------
 -- 
@@ -40,12 +62,15 @@
 -- @return Animate3D#Animate3D self (return value: cc.Animate3D)
         
 --------------------------------
--- get high quality<br>
--- is it high quality
--- @function [parent=#Animate3D] isHighQuality 
+-- @overload self, cc.Animation3D, float, float         
+-- @overload self, cc.Animation3D         
+-- @function [parent=#Animate3D] init
 -- @param self
+-- @param #cc.Animation3D animation
+-- @param #float fromTime
+-- @param #float duration
 -- @return bool#bool ret (return value: bool)
-        
+
 --------------------------------
 -- get & set origin interval
 -- @function [parent=#Animate3D] setOriginInterval 
@@ -58,6 +83,12 @@
 -- @function [parent=#Animate3D] getWeight 
 -- @param self
 -- @return float#float ret (return value: float)
+        
+--------------------------------
+-- get animate quality
+-- @function [parent=#Animate3D] getQuality 
+-- @param self
+-- @return int#int ret (return value: int)
         
 --------------------------------
 -- @overload self, cc.Animation3D, float, float         
@@ -134,6 +165,12 @@
 -- @function [parent=#Animate3D] step 
 -- @param self
 -- @param #float dt
+-- @return Animate3D#Animate3D self (return value: cc.Animate3D)
+        
+--------------------------------
+-- 
+-- @function [parent=#Animate3D] Animate3D 
+-- @param self
 -- @return Animate3D#Animate3D self (return value: cc.Animate3D)
         
 return nil

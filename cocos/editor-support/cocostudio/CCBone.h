@@ -1,5 +1,6 @@
-/****************************************************************************
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+﻿/****************************************************************************
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -25,12 +26,12 @@ THE SOFTWARE.
 #ifndef __CCBONE_H__
 #define __CCBONE_H__
 
-#include "cocostudio/CCArmatureDefine.h"
-#include "cocostudio/CCDatas.h"
-#include "cocostudio/CCTween.h"
-#include "cocostudio/CCDecorativeDisplay.h"
-#include "cocostudio/CCDisplayManager.h"
-#include "cocostudio/CocosStudioExport.h"
+#include "editor-support/cocostudio/CCArmatureDefine.h"
+#include "editor-support/cocostudio/CCDatas.h"
+#include "editor-support/cocostudio/CCTween.h"
+#include "editor-support/cocostudio/CCDecorativeDisplay.h"
+#include "editor-support/cocostudio/CCDisplayManager.h"
+#include "editor-support/cocostudio/CocosStudioExport.h"
 #include "2d/CCNode.h"
 #include "math/CCMath.h"
 
@@ -63,7 +64,7 @@ public:
      * @js NA
      * @lua NA
      */
-    virtual ~Bone(void);
+    virtual ~Bone();
 
     /**
      * Initializes an empty Bone with nothing init.
@@ -101,13 +102,13 @@ public:
 
     /**
      * Add a child to this bone, and it will let this child call setParent(Bone *parent) function to set self to it's parent
-     * @param 	child  the child you want to add
+     * @param     child  the child you want to add
      */
     void addChildBone(Bone *child);
 
     /**
      * Set parent bone.
-     * If parent is NUll, then also remove this bone from armature.
+     * If parent is null, then also remove this bone from armature.
      * It will not set the Armature, if you want to add the bone to a Armature, you should use Armature::addBone(Bone *bone, const char* parentName).
      *
      * @param parent  the parent bone.
@@ -130,7 +131,7 @@ public:
 
     /**
      * Removes a child Bone
-     * @param 	bone   the bone you want to remove
+     * @param     bone   the bone you want to remove
      */
     void removeChildBone(Bone *bone, bool recursion);
 
@@ -198,13 +199,13 @@ public:
      * Set blend function
      */
     virtual void setBlendFunc(const cocos2d::BlendFunc& blendFunc);
-    virtual cocos2d::BlendFunc getBlendFunc(void) { return _blendFunc; }
+    virtual cocos2d::BlendFunc getBlendFunc() { return _blendFunc; }
 
     /*
      * Set if blend function is dirty 
      */
     virtual void setBlendDirty(bool dirty) { _blendDirty = dirty; }
-    virtual bool isBlendDirty(void) { return _blendDirty; }
+    virtual bool isBlendDirty() { return _blendDirty; }
 
     virtual FrameData *getTweenData() const { return _tweenData; }
 
@@ -227,20 +228,20 @@ protected:
     DisplayManager *_displayManager;
 
     /*
-     *	When Armature play an animation, if there is not a MovementBoneData of this bone in this MovementData, this bone will be hidden.
-     *	Set IgnoreMovementBoneData to true, then this bone will also be shown.
+     *    When Armature play an animation, if there is not a MovementBoneData of this bone in this MovementData, this bone will be hidden.
+     *    Set IgnoreMovementBoneData to true, then this bone will also be shown.
      */
     bool _ignoreMovementBoneData;
 
     cocos2d::BlendFunc _blendFunc;
     bool _blendDirty;
 
-    Tween *_tween;				//! Calculate tween effect
+    Tween *_tween;                //! Calculate tween effect
 
     //! Used for making tween effect in every frame
     FrameData *_tweenData;
 
-    Bone *_parentBone;	               //! A weak reference to its parent
+    Bone *_parentBone;                   //! A weak reference to its parent
     bool _boneTransformDirty;          //! Whether or not transform dirty
 
     //! self Transform, use this to change display's state

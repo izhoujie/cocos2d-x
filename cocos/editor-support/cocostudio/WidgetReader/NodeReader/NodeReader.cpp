@@ -1,5 +1,6 @@
 /****************************************************************************
  Copyright (c) 2014 cocos2d-x.org
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  
  http://www.cocos2d-x.org
  
@@ -22,11 +23,11 @@
  THE SOFTWARE.
  ****************************************************************************/
 
-#include "NodeReader.h"
+#include "editor-support/cocostudio/WidgetReader/NodeReader/NodeReader.h"
 
-#include "cocostudio/CSParseBinary_generated.h"
-#include "cocostudio/ActionTimeline/CCActionTimeline.h"
-#include "cocostudio/CCObjectExtensionData.h"
+#include "editor-support/cocostudio/CSParseBinary_generated.h"
+#include "editor-support/cocostudio/ActionTimeline/CCActionTimeline.h"
+#include "editor-support/cocostudio/CCComExtensionData.h"
 
 #include "tinyxml2.h"
 #include "flatbuffers/flatbuffers.h"
@@ -73,7 +74,7 @@ namespace cocostudio
     {
         if (!_instanceNodeReader)
         {
-            _instanceNodeReader = new NodeReader();
+            _instanceNodeReader = new (std::nothrow) NodeReader();
         }
         
         return _instanceNodeReader;
@@ -89,17 +90,17 @@ namespace cocostudio
     {
         std::string name = "";
         long actionTag = 0;
-        Vec2 rotationSkew = Vec2::ZERO;
+        Vec2 rotationSkew;
         int zOrder = 0;
         bool visible = true;
         GLubyte alpha = 255;
         int tag = 0;
-        Vec2 position = Vec2::ZERO;
-        Vec2 scale = Vec2(1.0f, 1.0f);
-        Vec2 anchorPoint = Vec2::ZERO;
+        Vec2 position;
+        Vec2 scale(1.0f, 1.0f);
+        Vec2 anchorPoint;
         Color4B color(255, 255, 255, 255);
 
-        Vec2 size = Vec2::ZERO;
+        Vec2 size;
         bool flipX = false;
         bool flipY = false;
         bool ignoreSize = false;
@@ -247,11 +248,7 @@ namespace cocostudio
         while (child)
         {
             std::string attriname = child->Name();
-            if (attriname == "Children")
-            {
-                break;
-            }
-            else if (attriname == "Position")
+            if (attriname == "Position")
             {
                 attribute = child->FirstAttribute();
                 
@@ -474,7 +471,7 @@ namespace cocostudio
         float rotationSkewY      = options->rotationSkew()->rotationSkewY();
         float anchorx       = options->anchorPoint()->scaleX();
         float anchory       = options->anchorPoint()->scaleY();
-        int zorder		    = options->zOrder();
+        int zorder            = options->zOrder();
         int tag             = options->tag();
         int actionTag       = options->actionTag();
         bool visible        = options->visible() != 0;
@@ -513,10 +510,14 @@ namespace cocostudio
         
         node->setTag(tag);
         
-        ObjectExtensionData* extensionData = ObjectExtensionData::create();
+        ComExtensionData* extensionData = ComExtensionData::create();
         extensionData->setCustomProperty(customProperty);
         extensionData->setActionTag(actionTag);
-        node->setUserObject(extensionData);
+        if (node->getComponent(ComExtensionData::COMPONENT_NAME))
+        {
+            node->removeComponent(ComExtensionData::COMPONENT_NAME);
+        }
+        node->addComponent(extensionData);
         
         
         node->setCascadeColorEnabled(true);

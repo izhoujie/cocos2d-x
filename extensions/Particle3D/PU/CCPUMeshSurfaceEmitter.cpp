@@ -1,6 +1,7 @@
 /****************************************************************************
  Copyright (C) 2013 Henry van Merode. All rights reserved.
- Copyright (c) 2015 Chukong Technologies Inc.
+ Copyright (c) 2015-2016 Chukong Technologies Inc.
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  
  http://www.cocos2d-x.org
  
@@ -24,6 +25,7 @@
  ****************************************************************************/
 
 #include "CCPUMeshSurfaceEmitter.h"
+#include <cmath>
 #include "extensions/Particle3D/PU/CCPUParticleSystem3D.h"
 #include "extensions/Particle3D/PU/CCPUUtil.h"
 
@@ -33,7 +35,7 @@ const Vec3 PUMeshSurfaceEmitter::DEFAULT_SCALE(1, 1, 1);
 const MeshInfo::MeshSurfaceDistribution PUMeshSurfaceEmitter::DEFAULT_DISTRIBUTION = MeshInfo::MSD_HOMOGENEOUS;
 
 //-----------------------------------------------------------------------
-inline void PUTriangle::calculateSquareSurface (void)
+inline void PUTriangle::calculateSquareSurface ()
 {
     /* Calculating the surface of a triangle with the following algorithm:
         v1 = Vector3(x1, y1, z1)
@@ -47,14 +49,14 @@ inline void PUTriangle::calculateSquareSurface (void)
     */
 
     // a, b and c are the length of each triangle
-    float a = sqrt (	(v1.x - v3.x) * (v1.x - v3.x) + 
-                        (v1.y - v3.y) * (v1.y - v3.y) + 
+    float a = std::sqrt ((v1.x - v3.x) * (v1.x - v3.x) +
+                        (v1.y - v3.y) * (v1.y - v3.y) +
                         (v1.z - v3.z) * (v1.z - v3.z));
-    float b = sqrt (	(v2.x - v1.x) * (v2.x - v1.x) + 
-                        (v2.y - v1.y) * (v2.y - v1.y) + 
+    float b = std::sqrt ((v2.x - v1.x) * (v2.x - v1.x) +
+                        (v2.y - v1.y) * (v2.y - v1.y) +
                         (v2.z - v1.z) * (v2.z - v1.z));
-    float c = sqrt (	(v3.x - v2.x) * (v3.x - v2.x) + 
-                        (v3.y - v2.y) * (v3.y - v2.y) + 
+    float c = std::sqrt ((v3.x - v2.x) * (v3.x - v2.x) +
+                        (v3.y - v2.y) * (v3.y - v2.y) +
                         (v3.z - v2.z) * (v3.z - v2.z));
     float p = 0.5f * (a + b + c);
 
@@ -62,7 +64,7 @@ inline void PUTriangle::calculateSquareSurface (void)
     squareSurface = p * (p-a) * (p-b) * (p-c);
 }
 //-----------------------------------------------------------------------
-inline void PUTriangle::calculateSurfaceNormal (void)
+inline void PUTriangle::calculateSurfaceNormal ()
 {
     /* Calculating the surface normal of a triangle with the following algorithm:
         v1 = Vector3(x1, y1, z1)
@@ -74,7 +76,7 @@ inline void PUTriangle::calculateSurfaceNormal (void)
     surfaceNormal.normalize();
 }
 //-----------------------------------------------------------------------
-inline void PUTriangle::calculateEdgeNormals (void)
+inline void PUTriangle::calculateEdgeNormals ()
 {
     Vec3::cross(v1, v2, &en1);
     en1.normalize();
@@ -84,7 +86,7 @@ inline void PUTriangle::calculateEdgeNormals (void)
     en3.normalize();
 }
 //-----------------------------------------------------------------------
-const Vec3 PUTriangle::getRandomTrianglePosition (void)
+const Vec3 PUTriangle::getRandomTrianglePosition ()
 {
     // Use barycentric coordinates. Let A, B, C be the three vertices of the triangle. Any point P inside can 
     // be expressed uniquely as P = aA + bB + cC, where a+b+c=1 and a,b,c are each >= 0.
@@ -106,35 +108,29 @@ const Vec3 PUTriangle::getRandomTrianglePosition (void)
     return a * v1 + b * v2 + c * v3;
 }
 //-----------------------------------------------------------------------
-const PUTriangle::PositionAndNormal PUTriangle::getRandomEdgePositionAndNormal (void)
+const PUTriangle::PositionAndNormal PUTriangle::getRandomEdgePositionAndNormal ()
 {
     float mult = CCRANDOM_0_1();
     float randomVal = CCRANDOM_0_1() * 3.0f;
     PositionAndNormal pAndN;
-    pAndN.position = Vec3::ZERO;
-    pAndN.normal = Vec3::ZERO;
+    pAndN.position.setZero();
+    pAndN.normal.setZero();
     if (randomVal < 1)
     {
-        pAndN.position = Vec3(	v2.x + mult*(v1.x - v2.x),
-                                        v2.y + mult*(v1.y - v2.y),
-                                        v2.z + mult*(v1.z - v2.z));
+        pAndN.position.set(v2.x + mult*(v1.x - v2.x), v2.y + mult*(v1.y - v2.y), v2.z + mult*(v1.z - v2.z));
         pAndN.normal = en1;
     }
     else
     {
         if (randomVal < 2)
         {
-            pAndN.position = Vec3(	v3.x + mult*(v2.x - v3.x),
-                                            v3.y + mult*(v2.y - v3.y),
-                                            v3.z + mult*(v2.z - v3.z));
+            pAndN.position.set(v3.x + mult*(v2.x - v3.x), v3.y + mult*(v2.y - v3.y), v3.z + mult*(v2.z - v3.z));
             pAndN.normal = en2;
         }
         else
         {
     
-            pAndN.position = Vec3(	v1.x + mult*(v3.x - v1.x),
-                                            v1.y + mult*(v3.y - v1.y),
-                                            v1.z + mult*(v3.z - v1.z));
+            pAndN.position.set(v1.x + mult*(v3.x - v1.x), v1.y + mult*(v3.y - v1.y),  v1.z + mult*(v3.z - v1.z));
             pAndN.normal = en3;
         }
     }
@@ -142,12 +138,12 @@ const PUTriangle::PositionAndNormal PUTriangle::getRandomEdgePositionAndNormal (
     return pAndN;
 }
 //-----------------------------------------------------------------------
-const PUTriangle::PositionAndNormal PUTriangle::getRandomVertexAndNormal (void)
+const PUTriangle::PositionAndNormal PUTriangle::getRandomVertexAndNormal ()
 {
     float randomVal = CCRANDOM_0_1() * 3.0f;
     PositionAndNormal pAndN;
-    pAndN.position = Vec3::ZERO;
-    pAndN.normal = Vec3::ZERO;
+    pAndN.position.setZero();
+    pAndN.normal.setZero();
 
     if (randomVal < 1)
     {
@@ -173,17 +169,17 @@ const PUTriangle::PositionAndNormal PUTriangle::getRandomVertexAndNormal (void)
 //-----------------------------------------------------------------------
 //-----------------------------------------------------------------------
 //-----------------------------------------------------------------------
-MeshInfo::MeshInfo (const std::string& meshName, 
+MeshInfo::MeshInfo (const std::string& /*meshName*/,
     MeshSurfaceDistribution distribution,
-    const Quaternion& orientation,
-    const Vec3& scale) : 
+    const Quaternion& /*orientation*/,
+    const Vec3& /*scale*/) :
     mDistribution(distribution)
 {
     //Ogre::MeshPtr mesh = Ogre::MeshManager::getSingleton().load(meshName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
     //getMeshInformation(mesh, Vec3::ZERO, orientation, scale);
 }
 //-----------------------------------------------------------------------
-MeshInfo::~MeshInfo (void)
+MeshInfo::~MeshInfo ()
 {
     _triangles.clear();
 }
@@ -208,8 +204,8 @@ inline float MeshInfo::getGaussianRandom (float high, float cutoff)
         
     } while (w >= 1.0f);
     
-    w = sqrt((-2.0f * ::log(w)) / w);
-    y1 = abs(x1 * w);
+    w = std::sqrt((-2.0f * std::log(w)) / w);
+    y1 = std::abs(x1 * w);
     y1 = y1 > cutoff ? cutoff : y1;
     y1 *= high / cutoff;
     return y1;
@@ -222,7 +218,7 @@ const PUTriangle& MeshInfo::getTriangle (size_t triangleIndex)
 }
 
 //-----------------------------------------------------------------------
-const size_t MeshInfo::getRandomTriangleIndex (void)
+size_t MeshInfo::getRandomTriangleIndex()
 {
     size_t index;
     if (mDistribution == MSD_HOMOGENEOUS || mDistribution == MSD_HETEROGENEOUS_1)
@@ -240,8 +236,8 @@ const PUTriangle::PositionAndNormal MeshInfo::getRandomPositionAndNormal (const 
 {
     PUTriangle triangle = getTriangle(triangleIndex);
     PUTriangle::PositionAndNormal pAndN;
-    pAndN.position = Vec3::ZERO;
-    pAndN.normal = Vec3::ZERO;
+    pAndN.position.setZero();
+    pAndN.normal.setZero();
     if (mDistribution == MSD_HOMOGENEOUS || mDistribution == MSD_HETEROGENEOUS_1 || mDistribution == MSD_HETEROGENEOUS_2)
     {
         pAndN.position = triangle.getRandomTrianglePosition();
@@ -409,19 +405,19 @@ const PUTriangle::PositionAndNormal MeshInfo::getRandomPositionAndNormal (const 
 //-----------------------------------------------------------------------
 //-----------------------------------------------------------------------
 //-----------------------------------------------------------------------
-PUMeshSurfaceEmitter::PUMeshSurfaceEmitter(void) : 
-    PUEmitter(),
-    _meshName(),
-    _orientation(),
-    _scale(DEFAULT_SCALE),
-    _distribution(DEFAULT_DISTRIBUTION),
-    _meshInfo(0),
-    _triangleIndex(0),
-    _directionSet(false)
+PUMeshSurfaceEmitter::PUMeshSurfaceEmitter()
+: PUEmitter()
+, _meshName()
+, _orientation()
+, _scale(DEFAULT_SCALE)
+, _distribution(DEFAULT_DISTRIBUTION)
+, _meshInfo(0)
+, _triangleIndex(0)
+, _directionSet(false)
 {
 }
 //-----------------------------------------------------------------------
-PUMeshSurfaceEmitter::~PUMeshSurfaceEmitter(void)
+PUMeshSurfaceEmitter::~PUMeshSurfaceEmitter()
 {
     if (_meshInfo)
     {
@@ -448,8 +444,8 @@ void PUMeshSurfaceEmitter::unPrepare()
 void PUMeshSurfaceEmitter::initParticlePosition(PUParticle3D* particle)
 {
     PUTriangle::PositionAndNormal pAndN;
-    pAndN.position = Vec3::ZERO;
-    pAndN.normal = Vec3::ZERO;
+    pAndN.position.setZero();
+    pAndN.normal.setZero();
     _directionSet = false;
 
     if (_meshInfo && _meshInfo->getTriangleCount())
@@ -528,7 +524,7 @@ void PUMeshSurfaceEmitter::initParticleDirection(PUParticle3D* particle)
     }
 }
 //-----------------------------------------------------------------------
-const std::string& PUMeshSurfaceEmitter::getMeshName(void) const
+const std::string& PUMeshSurfaceEmitter::getMeshName() const
 {
     return _meshName;
 }
@@ -544,7 +540,7 @@ void PUMeshSurfaceEmitter::setMeshName(const std::string& meshName, bool doBuild
     }
 }
 //-----------------------------------------------------------------------
-const MeshInfo::MeshSurfaceDistribution PUMeshSurfaceEmitter::getDistribution (void) const
+MeshInfo::MeshSurfaceDistribution PUMeshSurfaceEmitter::getDistribution() const
 {
     return _distribution;
 }
@@ -554,7 +550,7 @@ void PUMeshSurfaceEmitter::setDistribution(MeshInfo::MeshSurfaceDistribution dis
     _distribution = distribution;
 }
 //-----------------------------------------------------------------------
-const Vec3& PUMeshSurfaceEmitter::getScale (void) const
+const Vec3& PUMeshSurfaceEmitter::getScale () const
 {
     return _scale;
 }
@@ -564,7 +560,7 @@ void PUMeshSurfaceEmitter::setScale (const Vec3& scale)
     _scale = scale;
 }
 //-----------------------------------------------------------------------
-void PUMeshSurfaceEmitter::build(void)
+void PUMeshSurfaceEmitter::build()
 {
     // Delete the mesh info if already existing
     if (_meshInfo)

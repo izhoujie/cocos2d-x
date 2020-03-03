@@ -1,7 +1,8 @@
 /****************************************************************************
  Copyright (c) 2012      greathqy
  Copyright (c) 2012      cocos2d-x.org
- Copyright (c) 2013-2014 Chukong Technologies Inc.
+ Copyright (c) 2013-2016 Chukong Technologies Inc.
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  
  http://www.cocos2d-x.org
  
@@ -24,22 +25,22 @@
  THE SOFTWARE.
  ****************************************************************************/
 
-#include "HttpClient.h"
+#include "platform/CCPlatformConfig.h"
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
 
-#include <thread>
+#include "network/HttpClient.h"
+
 #include <queue>
 #include <sstream>
-#include <condition_variable>
 #include <stdio.h>
 #include <errno.h>
 
-#include "base/CCVector.h"
 #include "base/CCDirector.h"
-#include "base/CCScheduler.h"
-
 #include "platform/CCFileUtils.h"
 #include "platform/android/jni/JniHelper.h"
 
+#include "base/ccUTF8.h"
+ 
 NS_CC_BEGIN
 
 namespace network {
@@ -49,24 +50,7 @@ typedef HttpRequestHeaders::iterator HttpRequestHeadersIter;
 typedef std::vector<std::string> HttpCookies;
 typedef HttpCookies::iterator HttpCookiesIter;
 
-static std::mutex       s_requestQueueMutex;
-static std::mutex       s_responseQueueMutex;
-static std::mutex       s_cookieFileMutex;
-
-static std::condition_variable_any s_sleepCondition;
-
-static Vector<HttpRequest*>*  s_requestQueue = nullptr;
-static Vector<HttpResponse*>* s_responseQueue = nullptr;
-
-static HttpClient *s_httpClient = nullptr; // pointer to singleton
-
-static std::string s_responseMessage = "";
-
-static std::string s_cookieFilename = "";
-    
-static std::string s_sslCaFilename = "";
-
-static HttpRequest *s_requestSentinel = new HttpRequest;
+static HttpClient* _httpClient = nullptr; // pointer to singleton
     
 
 struct CookiesInfo
@@ -98,32 +82,35 @@ size_t writeHeaderData(void* buffer, size_t sizes,HttpResponse* response)
     return sizes;
 }
 
-static void processResponse(HttpResponse* response, std::string& responseMessage);
-
 class HttpURLConnection
 {
 public:
-    HttpURLConnection():_httpURLConnection(nullptr),
-    _requestmethod(""),
-    _responseCookies(""),
-    _cookieFileName(""),
-    _contentLength(0)
+    HttpURLConnection(HttpClient* httpClient)
+    :_client(httpClient)
+    ,_httpURLConnection(nullptr)
+    ,_requestmethod("")
+    ,_responseCookies("")
+    ,_cookieFileName("")
+    ,_contentLength(0)
     {
 
     }
 
     ~HttpURLConnection()
     {
-
+        if(_httpURLConnection != nullptr)
+        {
+            JniHelper::getEnv()->DeleteGlobalRef(_httpURLConnection);
+        }
     }
     
     void setRequestMethod(const char* method)
     {
         _requestmethod = method;
-        
+
         JniMethodInfo methodInfo;
         if (JniHelper::getStaticMethodInfo(methodInfo,
-                                           "org/cocos2dx/lib/Cocos2dxHttpURLConnection",
+                                           "org.cocos2dx.lib.Cocos2dxHttpURLConnection",
                                            "setRequestMethod",
                                            "(Ljava/net/HttpURLConnection;Ljava/lang/String;)V"))
         {
@@ -139,24 +126,24 @@ public:
     {
         createHttpURLConnection(request->getUrl());
         if(!configure())
+        {
             return false;
+        }
         /* get custom header data (if set) */
         HttpRequestHeaders headers=request->getHeaders();
         if(!headers.empty())
         {
             /* append custom headers one by one */
-            for (HttpRequestHeadersIter it = headers.begin(); it != headers.end(); ++it)
+            for (auto& header : headers)
             {
-                std::string val = *it;
-                
-                int len = val.length();
-                int pos = val.find(':');
+                int len = header.length();
+                int pos = header.find(':');
                 if (-1 == pos || pos >= len)
                 {
                     continue;
                 }
-                std::string str1 = val.substr(0, pos);
-                std::string str2 = val.substr(pos + 1, len - pos - 1);
+                std::string str1 = header.substr(0, pos);
+                std::string str2 = header.substr(pos + 1, len - pos - 1);
                 addRequestHeader(str1.c_str(), str2.c_str());
             }
         }
@@ -171,7 +158,7 @@ public:
         int suc = 0;
         JniMethodInfo methodInfo;
         if (JniHelper::getStaticMethodInfo(methodInfo,
-                                           "org/cocos2dx/lib/Cocos2dxHttpURLConnection",
+                                           "org.cocos2dx.lib.Cocos2dxHttpURLConnection",
                                            "connect",
                                            "(Ljava/net/HttpURLConnection;)I"))
         {
@@ -187,7 +174,7 @@ public:
     {
         JniMethodInfo methodInfo;
         if (JniHelper::getStaticMethodInfo(methodInfo,
-                                           "org/cocos2dx/lib/Cocos2dxHttpURLConnection",
+                                           "org.cocos2dx.lib.Cocos2dxHttpURLConnection",
                                            "disconnect",
                                            "(Ljava/net/HttpURLConnection;)V"))
         {
@@ -202,7 +189,7 @@ public:
         int responseCode = 0;
         JniMethodInfo methodInfo;
         if (JniHelper::getStaticMethodInfo(methodInfo,
-                                           "org/cocos2dx/lib/Cocos2dxHttpURLConnection",
+                                           "org.cocos2dx.lib.Cocos2dxHttpURLConnection",
                                            "getResponseCode",
                                            "(Ljava/net/HttpURLConnection;)I"))
         {
@@ -219,7 +206,7 @@ public:
         char* message = nullptr;
         JniMethodInfo methodInfo;
         if (JniHelper::getStaticMethodInfo(methodInfo,
-                                           "org/cocos2dx/lib/Cocos2dxHttpURLConnection",
+                                           "org.cocos2dx.lib.Cocos2dxHttpURLConnection",
                                            "getResponseMessage",
                                            "(Ljava/net/HttpURLConnection;)Ljava/lang/String;"))
         {
@@ -240,7 +227,7 @@ public:
     {
         JniMethodInfo methodInfo;
         if (JniHelper::getStaticMethodInfo(methodInfo,
-                                           "org/cocos2dx/lib/Cocos2dxHttpURLConnection",
+                                           "org.cocos2dx.lib.Cocos2dxHttpURLConnection",
                                            "sendRequest",
                                            "(Ljava/net/HttpURLConnection;[B)V"))
         {
@@ -259,14 +246,14 @@ public:
     size_t saveResponseCookies(const char* responseCookies, size_t count)
     {
         if (nullptr == responseCookies || strlen(responseCookies) == 0 || count == 0)
+        {
             return 0;
+        }
         
         if (_cookieFileName.empty())
         {
             _cookieFileName = FileUtils::getInstance()->getWritablePath() + "cookieFile.txt";
         }
-        
-        std::lock_guard<std::mutex> lock(s_cookieFileMutex);
         
         FILE* fp = fopen(_cookieFileName.c_str(), "w");
         if (nullptr == fp)
@@ -287,7 +274,7 @@ public:
         char* headers = nullptr;
         JniMethodInfo methodInfo;
         if (JniHelper::getStaticMethodInfo(methodInfo,
-                                           "org/cocos2dx/lib/Cocos2dxHttpURLConnection",
+                                           "org.cocos2dx.lib.Cocos2dxHttpURLConnection",
                                            "getResponseHeaders",
                                            "(Ljava/net/HttpURLConnection;)Ljava/lang/String;"))
         {
@@ -307,12 +294,14 @@ public:
     char* getResponseContent(HttpResponse* response)
     {
         if (nullptr == response)
+        {
             return nullptr;
+        }
         
         char* content = nullptr;
         JniMethodInfo methodInfo;
         if (JniHelper::getStaticMethodInfo(methodInfo,
-                                           "org/cocos2dx/lib/Cocos2dxHttpURLConnection",
+                                           "org.cocos2dx.lib.Cocos2dxHttpURLConnection",
                                            "getResponseContent",
                                            "(Ljava/net/HttpURLConnection;)[B"))
         {
@@ -335,7 +324,7 @@ public:
         char* value = nullptr;
         JniMethodInfo methodInfo;
         if (JniHelper::getStaticMethodInfo(methodInfo,
-                                           "org/cocos2dx/lib/Cocos2dxHttpURLConnection",
+                                           "org.cocos2dx.lib.Cocos2dxHttpURLConnection",
                                            "getResponseHeaderByKey",
                                            "(Ljava/net/HttpURLConnection;Ljava/lang/String;)Ljava/lang/String;"))
         {
@@ -358,7 +347,7 @@ public:
         int contentLength = 0;
         JniMethodInfo methodInfo;
         if (JniHelper::getStaticMethodInfo(methodInfo,
-                                           "org/cocos2dx/lib/Cocos2dxHttpURLConnection",
+                                           "org.cocos2dx.lib.Cocos2dxHttpURLConnection",
                                            "getResponseHeaderByKeyInt",
                                            "(Ljava/net/HttpURLConnection;Ljava/lang/String;)I"))
         {
@@ -377,7 +366,7 @@ public:
         char* header = nullptr;
         JniMethodInfo methodInfo;
         if (JniHelper::getStaticMethodInfo(methodInfo,
-                                           "org/cocos2dx/lib/Cocos2dxHttpURLConnection",
+                                           "org.cocos2dx.lib.Cocos2dxHttpURLConnection",
                                            "getResponseHeaderByIdx",
                                            "(Ljava/net/HttpURLConnection;I)Ljava/lang/String;"))
         {
@@ -393,7 +382,7 @@ public:
         return header;
     }
     
-    const std::string getCookieFileName()
+    const std::string& getCookieFileName() const
     {
         return _cookieFileName;
     }
@@ -409,11 +398,11 @@ public:
     }
     
 private:
-    void createHttpURLConnection(std::string url)
+    void createHttpURLConnection(const std::string& url)
     {
         JniMethodInfo methodInfo;
         if (JniHelper::getStaticMethodInfo(methodInfo,
-            "org/cocos2dx/lib/Cocos2dxHttpURLConnection",
+            "org.cocos2dx.lib.Cocos2dxHttpURLConnection",
             "createHttpURLConnection",
             "(Ljava/lang/String;)Ljava/net/HttpURLConnection;"))
         {
@@ -422,6 +411,7 @@ private:
             jobject jObj = methodInfo.env->CallStaticObjectMethod(methodInfo.classID, methodInfo.methodID, jurl);
             _httpURLConnection = methodInfo.env->NewGlobalRef(jObj);
             methodInfo.env->DeleteLocalRef(jurl);
+            methodInfo.env->DeleteLocalRef(jObj);
             methodInfo.env->DeleteLocalRef(methodInfo.classID);
         }
     }
@@ -430,7 +420,7 @@ private:
     {
         JniMethodInfo methodInfo;
         if (JniHelper::getStaticMethodInfo(methodInfo,
-            "org/cocos2dx/lib/Cocos2dxHttpURLConnection",
+            "org.cocos2dx.lib.Cocos2dxHttpURLConnection",
             "addRequestHeader",
             "(Ljava/net/HttpURLConnection;Ljava/lang/String;Ljava/lang/String;)V"))
         {
@@ -446,14 +436,14 @@ private:
     
     void addCookiesForRequestHeader()
     {
-        if(s_cookieFilename.empty())
+        if(_client->getCookieFilename().empty())
+        {
             return;
+        }
         
-        _cookieFileName = FileUtils::getInstance()->fullPathForFilename(s_cookieFilename.c_str());
+        _cookieFileName = FileUtils::getInstance()->fullPathForFilename(_client->getCookieFilename());
         
-        std::lock_guard<std::mutex> lock(s_cookieFileMutex);
-        
-        std::string cookiesInfo = FileUtils::getInstance()->getStringFromFile(_cookieFileName.c_str());
+        std::string cookiesInfo = FileUtils::getInstance()->getStringFromFile(_cookieFileName);
         
         if (cookiesInfo.empty())
             return;
@@ -471,14 +461,11 @@ private:
         if (cookiesVec.empty())
             return;
         
-        HttpCookiesIter iter = cookiesVec.begin();
-        
         std::vector<CookiesInfo> cookiesInfoVec;
         cookiesInfoVec.clear();
 
-        for (; iter != cookiesVec.end(); iter++)
+        for (auto& cookies : cookiesVec)
         {
-            std::string cookies = *iter;
             if (cookies.find("#HttpOnly_") != std::string::npos)
             {
                 cookies = cookies.substr(10);
@@ -511,16 +498,15 @@ private:
             cookiesInfoVec.push_back(co);
         }
 
-        std::vector<CookiesInfo>::iterator cookiesIter = cookiesInfoVec.begin();
         std::string sendCookiesInfo = "";
         int cookiesCount = 0;
-        for (; cookiesIter != cookiesInfoVec.end(); cookiesIter++)
+        for (auto& cookieInfo : cookiesInfoVec)
         {
-            if (_url.find(cookiesIter->domain) != std::string::npos)
+            if (_url.find(cookieInfo.domain) != std::string::npos)
             {
-                std::string keyValue = cookiesIter->key;
+                std::string keyValue = cookieInfo.key;
                 keyValue.append("=");
-                keyValue.append(cookiesIter->value);
+                keyValue.append(cookieInfo.value);
                 if (cookiesCount != 0)
                     sendCookiesInfo.append(";");
                 
@@ -537,7 +523,7 @@ private:
     {
         JniMethodInfo methodInfo;
         if (JniHelper::getStaticMethodInfo(methodInfo,
-            "org/cocos2dx/lib/Cocos2dxHttpURLConnection",
+            "org.cocos2dx.lib.Cocos2dxHttpURLConnection",
             "setReadAndConnectTimeout",
             "(Ljava/net/HttpURLConnection;II)V"))
         {
@@ -549,14 +535,14 @@ private:
 
     void setVerifySSL()
     {
-        if(s_sslCaFilename.empty())
+        if(_client->getSSLVerification().empty())
             return;
 
-        std::string fullpath = FileUtils::getInstance()->fullPathForFilename(s_sslCaFilename.c_str());
+        std::string fullpath = FileUtils::getInstance()->fullPathForFilename(_client->getSSLVerification());
 
         JniMethodInfo methodInfo;
         if (JniHelper::getStaticMethodInfo(methodInfo,
-            "org/cocos2dx/lib/Cocos2dxHttpURLConnection",
+            "org.cocos2dx.lib.Cocos2dxHttpURLConnection",
             "setVerifySSL",
             "(Ljava/net/HttpURLConnection;Ljava/lang/String;)V"))
         {
@@ -571,13 +557,16 @@ private:
     bool configure()
     {   
         if(nullptr == _httpURLConnection)
+        {
             return false;
+        }
 
-        HttpClient* instnace = HttpClient::getInstance();
-        if(nullptr == instnace)
+        if(nullptr == _client)
+        {
             return false;
+        }
 
-        setReadAndConnectTimeout(instnace->getTimeoutForRead() * 1000, instnace->getTimeoutForConnect() * 1000);
+        setReadAndConnectTimeout(_client->getTimeoutForRead() * 1000, _client->getTimeoutForConnect() * 1000);
 
         setVerifySSL();
 
@@ -586,47 +575,36 @@ private:
 
     char* getBufferFromJString(jstring jstr, JNIEnv* env)
     {
-        if (nullptr == jstr) 
+        if (nullptr == jstr)
         {
             return nullptr;
         }
-
-        const char* str = nullptr;
-        char* ret = nullptr;
-        str = env->GetStringUTFChars(jstr, nullptr);
-        if (nullptr != str) 
-        {
-            ret = strdup(str);
-        }
-
-        env->ReleaseStringUTFChars(jstr, str);
-
-        return ret;
+        std::string strValue = cocos2d::StringUtils::getStringUTFCharsJNI(env, jstr);
+        return strdup(strValue.c_str());
     }
 
-    int getCStrFromJByteArray(jbyteArray jba, JNIEnv* env, char** ppData) 
+    int getCStrFromJByteArray(jbyteArray jba, JNIEnv* env, char** ppData)
     {
-        if (nullptr == jba) 
+        if (nullptr == jba)
         {
             *ppData = nullptr;
             return 0;
         }
 
-        char* str = nullptr;
-
-        int len  = env->GetArrayLength(jba);
-        str = (char*)malloc(sizeof(char)*len);
+        int len = env->GetArrayLength(jba);
+        char* str = (char*)malloc(sizeof(char)*len);
         env->GetByteArrayRegion(jba, 0, len, (jbyte*)str);
 
         *ppData = str;
         return len;
     }
 
-    const std::string getCookieString()
+    const std::string& getCookieString() const
     {
         return _responseCookies;
     }
 private:
+    HttpClient* _client;
     jobject _httpURLConnection;
     std::string _requestmethod;
     std::string _responseCookies;
@@ -636,13 +614,13 @@ private:
 };
 
 // Process Response
-static void processResponse(HttpResponse* response, std::string& responseMessage)
+void HttpClient::processResponse(HttpResponse* response, char* responseMessage)
 {
     auto request = response->getHttpRequest();
     HttpRequest::Type requestType = request->getRequestType();
 
-    if (HttpRequest::Type::GET != requestType && 
-        HttpRequest::Type::POST != requestType && 
+    if (HttpRequest::Type::GET != requestType &&
+        HttpRequest::Type::POST != requestType &&
         HttpRequest::Type::PUT != requestType &&
         HttpRequest::Type::DELETE != requestType)
     {
@@ -653,7 +631,7 @@ static void processResponse(HttpResponse* response, std::string& responseMessage
     long responseCode = -1;
     int  retValue = 0;
 
-    HttpURLConnection urlConnection;
+    HttpURLConnection urlConnection(this);
     if(!urlConnection.init(request))
     {
         response->setSucceed(false);
@@ -699,6 +677,14 @@ static void processResponse(HttpResponse* response, std::string& responseMessage
 
     responseCode = urlConnection.getResponseCode();
 
+    if (0 == responseCode)
+    {
+       response->setSucceed(false);
+       response->setErrorBuffer("connect failed");
+       response->setResponseCode(-1);
+       return;
+    }
+
     char* headers = urlConnection.getResponseHeaders();
     if (nullptr != headers)
     {
@@ -717,24 +703,30 @@ static void processResponse(HttpResponse* response, std::string& responseMessage
     //content len
     int contentLength = urlConnection.getResponseHeaderByKeyInt("Content-Length");
     char* contentInfo = urlConnection.getResponseContent(response);
-    if (nullptr != contentInfo) {
-//      response->setResponseDataString(contentInfo, contentLength);
+    if (nullptr != contentInfo) 
+    {
         std::vector<char> * recvBuffer = (std::vector<char>*)response->getResponseData();
         recvBuffer->clear();
         recvBuffer->insert(recvBuffer->begin(), (char*)contentInfo, ((char*)contentInfo) + urlConnection.getContentLength());
     }
     free(contentInfo);
     
-    responseMessage = urlConnection.getResponseMessage();
+    char *messageInfo = urlConnection.getResponseMessage();
+    if (messageInfo)
+    {
+        strncpy(responseMessage, messageInfo, RESPONSE_BUFFER_SIZE-1);
+        free(messageInfo);
+    }
+
     urlConnection.disconnect();
 
     // write data to HttpResponse
     response->setResponseCode(responseCode);
 
-    if (responseCode == -1) 
+    if (responseCode == -1)
     {
         response->setSucceed(false);
-        response->setErrorBuffer(responseMessage.c_str());
+        response->setErrorBuffer(responseMessage);
     }
     else
     {
@@ -745,174 +737,211 @@ static void processResponse(HttpResponse* response, std::string& responseMessage
 // Worker thread
 void HttpClient::networkThread()
 {    
-    auto scheduler = Director::getInstance()->getScheduler();
-    
+    increaseThreadCount();
+
     while (true) 
     {
         HttpRequest *request;
 
         // step 1: send http request if the requestQueue isn't empty
         {
-            std::lock_guard<std::mutex> lock(s_requestQueueMutex);
-            while (s_requestQueue->empty()) {
-                s_sleepCondition.wait(s_requestQueueMutex);
+            std::lock_guard<std::mutex> lock(_requestQueueMutex);
+            while (_requestQueue.empty()) {
+                _sleepCondition.wait(_requestQueueMutex);
             }
-            request = s_requestQueue->at(0);
-            s_requestQueue->erase(0);
+            request = _requestQueue.at(0);
+            _requestQueue.erase(0);
         }
 
-        if (request == s_requestSentinel) {
+        if (request == _requestSentinel) {
             break;
         }
         
         // Create a HttpResponse object, the default setting is http access failed
         HttpResponse *response = new (std::nothrow) HttpResponse(request);
-        processResponse(response, s_responseMessage);
+        processResponse(response, _responseMessage);
         
         // add response packet into queue
-        s_responseQueueMutex.lock();
-        s_responseQueue->pushBack(response);
-        s_responseQueueMutex.unlock();
+        _responseQueueMutex.lock();
+        _responseQueue.pushBack(response);
+        _responseQueueMutex.unlock();
         
-        if (nullptr != s_httpClient) {
-            scheduler->performFunctionInCocosThread(CC_CALLBACK_0(HttpClient::dispatchResponseCallbacks, this));
+        _schedulerMutex.lock();
+        if (nullptr != _scheduler)
+        {
+            _scheduler->performFunctionInCocosThread(CC_CALLBACK_0(HttpClient::dispatchResponseCallbacks, this));
         }
+        _schedulerMutex.unlock();
     }
     
     // cleanup: if worker thread received quit signal, clean up un-completed request queue
-    s_requestQueueMutex.lock();
-    s_requestQueue->clear();
-    s_requestQueueMutex.unlock();
+    _requestQueueMutex.lock();
+    _requestQueue.clear();
+    _requestQueueMutex.unlock();
     
-    
-    if (s_requestQueue != nullptr) {
-        delete s_requestQueue;
-        s_requestQueue = nullptr;
-        delete s_responseQueue;
-        s_responseQueue = nullptr;
-    }
-    
+    _responseQueueMutex.lock();
+    _responseQueue.clear();
+    _responseQueueMutex.unlock();
+
+    decreaseThreadCountAndMayDeleteThis();    
 }
 
 // Worker thread
 void HttpClient::networkThreadAlone(HttpRequest* request, HttpResponse* response)
 {
-    std::string responseMessage = "";
+    increaseThreadCount();
+
+    char responseMessage[RESPONSE_BUFFER_SIZE] = { 0 };
     processResponse(response, responseMessage);
 
-    auto scheduler = Director::getInstance()->getScheduler();
-    scheduler->performFunctionInCocosThread([response, request]{
-        const ccHttpRequestCallback& callback = request->getCallback();
-        Ref* pTarget = request->getTarget();
-        SEL_HttpResponse pSelector = request->getSelector();
+    _schedulerMutex.lock();
+    if (_scheduler != nullptr)
+    {
+        _scheduler->performFunctionInCocosThread([this, response, request]{
+            const ccHttpRequestCallback& callback = request->getCallback();
+            Ref* pTarget = request->getTarget();
+            SEL_HttpResponse pSelector = request->getSelector();
 
-        if (callback != nullptr)
-        {
-            callback(s_httpClient, response);
-        }
-        else if (pTarget && pSelector)
-        {
-            (pTarget->*pSelector)(s_httpClient, response);
-        }
-        response->release();
-        // do not release in other thread
-        request->release();
-    });
+            if (callback != nullptr)
+            {
+                callback(this, response);
+            }
+            else if (pTarget && pSelector)
+            {
+                (pTarget->*pSelector)(this, response);
+            }
+            response->release();
+            // do not release in other thread
+            request->release();
+        });
+    }
+    _schedulerMutex.unlock();
+    decreaseThreadCountAndMayDeleteThis();
 }
 
 // HttpClient implementation
 HttpClient* HttpClient::getInstance()
 {
-    if (s_httpClient == nullptr) {
-        s_httpClient = new (std::nothrow) HttpClient();
+    if (_httpClient == nullptr) 
+    {
+        _httpClient = new (std::nothrow) HttpClient();
     }
     
-    return s_httpClient;
+    return _httpClient;
 }
 
 void HttpClient::destroyInstance()
 {
-    CC_SAFE_DELETE(s_httpClient);
+    if (_httpClient == nullptr)
+    {
+        CCLOG("HttpClient singleton is nullptr");
+        return;
+    }
+
+    CCLOG("HttpClient::destroyInstance ...");
+
+    auto thiz = _httpClient;
+    _httpClient = nullptr;
+
+    thiz->_scheduler->unscheduleAllForTarget(thiz);
+
+    thiz->_schedulerMutex.lock();
+    thiz->_scheduler = nullptr;
+    thiz->_schedulerMutex.unlock();
+
+    {
+        std::lock_guard<std::mutex> lock(thiz->_requestQueueMutex);
+        thiz->_requestQueue.pushBack(thiz->_requestSentinel);
+    }
+    thiz->_sleepCondition.notify_one();
+
+    thiz->decreaseThreadCountAndMayDeleteThis();
+    CCLOG("HttpClient::destroyInstance() finished!");
 }
 
-void HttpClient::enableCookies(const char* cookieFile) {
-    if (cookieFile) {
-        s_cookieFilename = std::string(cookieFile);
+void HttpClient::enableCookies(const char* cookieFile) 
+{
+    std::lock_guard<std::mutex> lock(_cookieFileMutex);
+    if (cookieFile)
+    {
+        _cookieFilename = std::string(cookieFile);
     }
-    else {
-        s_cookieFilename = (FileUtils::getInstance()->getWritablePath() + "cookieFile.txt");
+    else
+    {
+        _cookieFilename = (FileUtils::getInstance()->getWritablePath() + "cookieFile.txt");
     }
 }
     
 void HttpClient::setSSLVerification(const std::string& caFile)
 {
-    s_sslCaFilename = caFile;
+    std::lock_guard<std::mutex> lock(_sslCaFileMutex);
+    _sslCaFilename = caFile;
 }
 
 HttpClient::HttpClient()
-: _timeoutForConnect(30)
+: _isInited(false)
+, _timeoutForConnect(30)
 , _timeoutForRead(60)
+, _threadCount(0)
+, _cookie(nullptr)
+, _requestSentinel(new HttpRequest())
+, _clearRequestPredicate(nullptr)
+, _clearResponsePredicate(nullptr)
 {
+    CCLOG("In the constructor of HttpClient!");
+    increaseThreadCount();
+    _scheduler = Director::getInstance()->getScheduler();
 }
 
 HttpClient::~HttpClient()
 {
-    if (s_requestQueue != nullptr) {
-        {
-            std::lock_guard<std::mutex> lock(s_requestQueueMutex);
-            s_requestQueue->pushBack(s_requestSentinel);
-        }
-        s_sleepCondition.notify_one();
-    }
-
-    s_httpClient = nullptr;
+    CCLOG("In the destructor of HttpClient!");
+    CC_SAFE_RELEASE(_requestSentinel);
 }
 
 //Lazy create semaphore & mutex & thread
-bool HttpClient::lazyInitThreadSemphore()
+bool HttpClient::lazyInitThreadSemaphore()
 {
-    if (s_requestQueue != nullptr) {
+    if (_isInited)
+    {
         return true;
-    } else {
-        
-        s_requestQueue = new (std::nothrow) Vector<HttpRequest*>();
-        s_responseQueue = new (std::nothrow) Vector<HttpResponse*>();
-
+    }
+    else
+    {
         auto t = std::thread(CC_CALLBACK_0(HttpClient::networkThread, this));
         t.detach();
+        _isInited = true;
     }
-    
+
     return true;
 }
 
 //Add a get task to queue
 void HttpClient::send(HttpRequest* request)
 {    
-    if (false == lazyInitThreadSemphore()) 
+    if (!lazyInitThreadSemaphore()) 
     {
         return;
     }
     
-    if (!request)
+    if (nullptr == request)
     {
         return;
     }
         
     request->retain();
 
-    if (nullptr != s_requestQueue) {
-        s_requestQueueMutex.lock();
-        s_requestQueue->pushBack(request);
-        s_requestQueueMutex.unlock();
-        
-        // Notify thread start to work
-        s_sleepCondition.notify_one();
-    }
+    _requestQueueMutex.lock();
+    _requestQueue.pushBack(request);
+    _requestQueueMutex.unlock();
+
+    // Notify thread start to work
+    _sleepCondition.notify_one();
 }
 
 void HttpClient::sendImmediate(HttpRequest* request)
 {
-    if(!request)
+    if(nullptr == request)
     {
         return;
     }
@@ -930,20 +959,17 @@ void HttpClient::dispatchResponseCallbacks()
 {
     // log("CCHttpClient::dispatchResponseCallbacks is running");
     //occurs when cocos thread fires but the network thread has already quited
-    if (nullptr == s_responseQueue) {
-        return;
-    }
     HttpResponse* response = nullptr;
     
-    s_responseQueueMutex.lock();
+    _responseQueueMutex.lock();
 
-    if (!s_responseQueue->empty())
+    if (!_responseQueue.empty())
     {
-        response = s_responseQueue->at(0);
-        s_responseQueue->erase(0);
+        response = _responseQueue.at(0);
+        _responseQueue.erase(0);
     }
-    
-    s_responseQueueMutex.unlock();
+
+    _responseQueueMutex.unlock();
     
     if (response)
     {
@@ -967,8 +993,101 @@ void HttpClient::dispatchResponseCallbacks()
     }
 }
 
+void HttpClient::clearResponseAndRequestQueue()
+{
+    _requestQueueMutex.lock();
+    if (_requestQueue.size())
+    {
+        for (auto it = _requestQueue.begin(); it != _requestQueue.end();)
+        {
+            if(!_clearRequestPredicate ||
+               _clearRequestPredicate((*it)))
+            {
+                (*it)->release();
+                it =_requestQueue.erase(it);
+            }
+            else
+            {
+                it++;
+            }
+        }
+    }
+    _requestQueueMutex.unlock();
+    
+    _responseQueueMutex.lock();
+    if (_clearResponsePredicate)
+    {
+        _responseQueue.erase(std::remove_if(_responseQueue.begin(), _responseQueue.end(), _clearResponsePredicate), _responseQueue.end());
+    }
+    else
+    {
+        _responseQueue.clear();
+    }
+    _responseQueueMutex.unlock();
+}
+
+void HttpClient::increaseThreadCount()
+{
+    _threadCountMutex.lock();
+    ++_threadCount;
+    _threadCountMutex.unlock();
+}
+
+void HttpClient::decreaseThreadCountAndMayDeleteThis()
+{
+    bool needDeleteThis = false;
+    _threadCountMutex.lock();
+    --_threadCount;
+    if (0 == _threadCount)
+    {
+        needDeleteThis = true;
+    }
+    
+    _threadCountMutex.unlock();
+    if (needDeleteThis)
+    {
+        delete this;
+    }
+}
+
+void HttpClient::setTimeoutForConnect(int value)
+{
+    std::lock_guard<std::mutex> lock(_timeoutForConnectMutex);
+    _timeoutForConnect = value;
+}
+    
+int HttpClient::getTimeoutForConnect()
+{
+    std::lock_guard<std::mutex> lock(_timeoutForConnectMutex);
+    return _timeoutForConnect;
+}
+    
+void HttpClient::setTimeoutForRead(int value)
+{
+    std::lock_guard<std::mutex> lock(_timeoutForReadMutex);
+    _timeoutForRead = value;
+}
+    
+int HttpClient::getTimeoutForRead()
+{
+    std::lock_guard<std::mutex> lock(_timeoutForReadMutex);
+    return _timeoutForRead;
+}
+    
+const std::string& HttpClient::getCookieFilename()
+{
+    std::lock_guard<std::mutex> lock(_cookieFileMutex);
+    return _cookieFilename;
+}
+    
+const std::string& HttpClient::getSSLVerification()
+{
+    std::lock_guard<std::mutex> lock(_sslCaFileMutex);
+    return _sslCaFilename;
+}
+
 }
 
 NS_CC_END
 
-
+#endif // #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)

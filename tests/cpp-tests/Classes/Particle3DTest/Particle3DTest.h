@@ -1,5 +1,6 @@
 /****************************************************************************
  Copyright (c) 2013 cocos2d-x.org
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  
  http://www.cocos2d-x.org
  
@@ -25,30 +26,27 @@
 #ifndef _PARTICLE3D_TEST_H_
 #define _PARTICLE3D_TEST_H_
 
-#include "../testBasic.h"
 #include "../BaseTest.h"
 #include "Particle3D/CCParticleSystem3D.h"
 #include <string>
-class Particle3DTestDemo : public BaseTest
+
+DEFINE_TEST_SUITE(Particle3DTests);
+
+class Particle3DTestDemo : public TestCase
 {
 public:
     CREATE_FUNC(Particle3DTestDemo);
     Particle3DTestDemo(void);
     virtual ~Particle3DTestDemo(void);
     
-    void restartCallback(Ref* sender) override;
-    void nextCallback(Ref* sender) override;
-    void backCallback(Ref* sender) override;
-    
     // overrides
     virtual bool init() override;
     virtual std::string title() const override;
-    virtual std::string subtitle() const override;
     virtual void update(float delta) override;
     
-    void onTouchesBegan(const std::vector<Touch*>& touches, cocos2d::Event  *event) override;
-    void onTouchesMoved(const std::vector<Touch*>& touches, cocos2d::Event  *event) override;
-    void onTouchesEnded(const std::vector<Touch*>& touches, cocos2d::Event  *event) override;
+    void onTouchesBegan(const std::vector<cocos2d::Touch*>& touches, cocos2d::Event  *event);
+    void onTouchesMoved(const std::vector<cocos2d::Touch*>& touches, cocos2d::Event  *event);
+    void onTouchesEnded(const std::vector<cocos2d::Touch*>& touches, cocos2d::Event  *event);
 
 protected:
     std::string    _title;
@@ -251,13 +249,6 @@ public:
     virtual std::string subtitle() const override;
 
     virtual bool init() override;
-};
-
-class Particle3DTestScene : public TestScene
-{
-public:
-    Particle3DTestScene(){};
-    virtual void runThisTest();
 };
 
 #endif

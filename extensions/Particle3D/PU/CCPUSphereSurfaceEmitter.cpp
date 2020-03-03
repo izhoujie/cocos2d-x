@@ -1,6 +1,7 @@
 /****************************************************************************
  Copyright (C) 2013 Henry van Merode. All rights reserved.
- Copyright (c) 2015 Chukong Technologies Inc.
+ Copyright (c) 2015-2016 Chukong Technologies Inc.
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  
  http://www.cocos2d-x.org
  
@@ -32,14 +33,13 @@ NS_CC_BEGIN
 const float PUSphereSurfaceEmitter::DEFAULT_RADIUS = 10.0f;
 
 //-----------------------------------------------------------------------
-PUSphereSurfaceEmitter::PUSphereSurfaceEmitter(void) : 
+PUSphereSurfaceEmitter::PUSphereSurfaceEmitter() : 
     PUEmitter(),
-    _radius(DEFAULT_RADIUS),
-    _randomVector(Vec3::ZERO)
+    _radius(DEFAULT_RADIUS)
 {
 }
 //-----------------------------------------------------------------------
-const float PUSphereSurfaceEmitter::getRadius(void) const
+float PUSphereSurfaceEmitter::getRadius() const
 {
     return _radius;
 }
@@ -53,9 +53,7 @@ void PUSphereSurfaceEmitter::initParticlePosition(PUParticle3D* particle)
 {
     // Generate a random unit vector to calculate a point on the sphere. This unit vector is
     // also used as direction vector if mAutoDirection has been set.
-    _randomVector = Vec3(CCRANDOM_MINUS1_1(), 
-        CCRANDOM_MINUS1_1(),
-        CCRANDOM_MINUS1_1());
+    _randomVector.set(CCRANDOM_MINUS1_1(), CCRANDOM_MINUS1_1(), CCRANDOM_MINUS1_1());
     _randomVector.normalize();
     //ParticleSystem* sys = mParentTechnique->getParentSystem();
     //if (sys)

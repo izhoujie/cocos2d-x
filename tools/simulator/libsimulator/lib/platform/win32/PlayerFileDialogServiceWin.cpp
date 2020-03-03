@@ -1,3 +1,27 @@
+/****************************************************************************
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
+ 
+ http://www.cocos2d-x.org
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+ ****************************************************************************/
+
 
 #include <string.h>
 
@@ -137,12 +161,20 @@ LPTSTR PlayerFileDialogServiceWin::parseExtensions(const std::string &extensions
         return buff;
     }
 
+    // 1.
     // "Lua Script File|*.lua;JSON File|*.json"
     // to
     // "Lua Script File (*.lua)\0*.lua\0JSON File (*.json)\0*.json\0";
+    // 
+    // 2.
+    // "Lua Script File|*.lua;Cocos Studio File|*.csd,*.csb"
+    // to
+    // "Lua Script File (*.lua)\0*.lua\0Cocos Studio File (*.csd;*.csb")\0*.csd;*.csb"\0";
     std::u16string u16extensions;
     std::u16string split1((char16_t*)L";");
     std::u16string split2((char16_t*)L"|");
+    std::u16string split3((char16_t*)L",");
+    std::string extensionsArg(extensions);
     cocos2d::StringUtils::UTF8ToUTF16(extensions, u16extensions);
     vector<std::u16string> pairs = splitString(u16extensions, split1);
 
@@ -163,6 +195,9 @@ LPTSTR PlayerFileDialogServiceWin::parseExtensions(const std::string &extensions
             descr = p.at(0);
             ext = p.at(1);
         }
+
+        // *.csd,*.csb -> *.csd;*.csb
+        std::replace(ext.begin(), ext.end(), ',', ';');
 
         wcscat(buff + offset, (WCHAR*)descr.c_str());
         wcscat(buff + offset, L" (");

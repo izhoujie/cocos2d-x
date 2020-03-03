@@ -1,5 +1,6 @@
 /****************************************************************************
- Copyright (c) 2014 Chukong Technologies Inc.
+ Copyright (c) 2014-2016 Chukong Technologies Inc.
+ Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
  http://www.cocos2d-x.org
 
@@ -54,7 +55,7 @@ class MeshVertexData;
  * @js NA
  * @lua NA
  */
-class MeshIndexData : public Ref
+class CC_DLL MeshIndexData : public Ref
 {
 public:
     /** create  */
@@ -86,7 +87,7 @@ CC_CONSTRUCTOR_ACCESS:
     
 protected:
     IndexBuffer*    _indexBuffer; //index buffer
-    MeshVertexData* _vertexData; //vertex buffer
+    MeshVertexData* _vertexData; //vertex buffer, weak ref
     AABB           _aabb; // original aabb of the submesh
     std::string    _id; //id
     GLenum         _primitiveType;
@@ -99,7 +100,7 @@ protected:
  * the MeshVertexData class.
  * @brief the MeshIndexData contain all of the vertices data which mesh need.
  */
-class MeshVertexData : public Ref
+class CC_DLL MeshVertexData : public Ref
 {
     friend class Sprite3D;
     friend class Mesh;

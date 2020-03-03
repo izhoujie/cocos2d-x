@@ -1,6 +1,7 @@
 /****************************************************************************
 Copyright (c) 2010-2012 cocos2d-x.org
-Copyright (c) 2013-2014 Chukong Technologies
+Copyright (c) 2013-2017 Chukong Technologies
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -26,8 +27,6 @@ THE SOFTWARE.
 #ifndef __MATH_CCGEOMETRY_H__
 #define __MATH_CCGEOMETRY_H__
 
-#include <math.h>
-
 #include "platform/CCPlatformMacros.h"
 #include "base/ccMacros.h"
 #include "math/CCMath.h"
@@ -47,7 +46,7 @@ public:
     /**Height of the Size.*/
     float height;
 public:
-    /**Conversion from Vec2 to Size.*/
+    /**Conversion from Size to Vec2.*/
     operator Vec2() const
     {
         return Vec2(width, height);
@@ -64,15 +63,9 @@ public:
      */
     Size();
     Size(float width, float height);
-    Size(const Size& other);
     explicit Size(const Vec2& point);
     /**@}*/
 
-    /**
-     * @js NA
-     * @lua NA
-     */
-    Size& operator= (const Size& other);
     /**
      * @js NA
      * @lua NA
@@ -120,7 +113,7 @@ public:
     /**Low left point of rect.*/
     Vec2 origin;
     /**Width and height of the rect.*/
-    Size  size;
+    Size size;
 
 public:
     /**
@@ -134,16 +127,10 @@ public:
      */
     Rect(float x, float y, float width, float height);
     /**
-    Copy constructor.
+     Constructor a rect.
      * @js NA
-     * @lua NA
      */
-    Rect(const Rect& other);
-    /**
-     * @js NA
-     * @lua NA
-     */
-    Rect& operator= (const Rect& other);
+    Rect(const Vec2& pos, const Size& dimension);
     /**
     Set the x, y, width and height of Rect.
      * @js NA
@@ -186,7 +173,7 @@ public:
      */
     bool equals(const Rect& rect) const;
     /**
-    Check if the points is contained in the rect.
+    Check if the points is contained inclusively in the rect.
      * @js NA
      */
     bool containsPoint(const Vec2& point) const;
@@ -195,6 +182,11 @@ public:
      * @js NA
      */
     bool intersectsRect(const Rect& rect) const;
+    /**
+    Check the intersect status of the rect and a circle.
+     * @js NA
+     */
+    bool intersectsCircle(const Vec2& center, float radius) const;
     /**
     Get the min rect which can contain this and rect.
      * @js NA

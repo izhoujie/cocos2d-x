@@ -1,5 +1,6 @@
 /****************************************************************************
-Copyright (c) 2013-2014 Chukong Technologies Inc.
+Copyright (c) 2013-2016 Chukong Technologies Inc.
+Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
 http://www.cocos2d-x.org
 
@@ -22,7 +23,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ****************************************************************************/
 
-#include "cocostudio/CCUtilMath.h"
+#include "editor-support/cocostudio/CCUtilMath.h"
+#include <cmath>
 
 using namespace cocos2d;
 
@@ -41,7 +43,7 @@ bool isSpriteContainPoint(Sprite *sprite, Vec2 point, Vec2 &outPoint)
 
 bool isSpriteContainPoint(Sprite *sprite, Vec2 point)
 {
-    Vec2 p = Vec2(0, 0);
+    Vec2 p;
     return isSpriteContainPoint(sprite, point, p);
 }
 
@@ -71,8 +73,8 @@ Vec2 circleTo(float t, Vec2 &center, float radius, float fromRadian, float radia
 {
     Vec2 p;
 
-    p.x = center.x + radius * cos(fromRadian + radianDif * t);
-    p.y = center.y + radius * sin(fromRadian + radianDif * t);
+    p.x = center.x + radius * std::cos(fromRadian + radianDif * t);
+    p.y = center.y + radius * std::sin(fromRadian + radianDif * t);
 
     return p;
 }
